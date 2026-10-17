@@ -1,0 +1,11 @@
+services:
+  gruessli:
+    build: .
+    container_name: gruessli
+    networks:
+      - caddy_net
+    restart: unless-stopped
+
+networks:
+  caddy_net:
+    external: true

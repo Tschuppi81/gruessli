@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grüessli · Postcard Creator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: airmail-striped header, postcard preview on a desk surface (left), tool panel (right); stacks on phones. */
+:root {
+  --bg: #e6ebf1;
+  --panel: #f8fafc;
+  --ink: #1b2430;
+  --muted: #566274;
+  --line: #cbd3de;
+  --field: #ffffff;
+  --blue: #1d4f9f;
+  --red: #c9372c;
+  --stripe-gap: #f8fafc;
+  --on-accent: #ffffff;
+  --accent: #1d4f9f;
+  --accent-hover: #173f80;
+  --shadow: 0 1px 2px rgba(20, 30, 50, .14), 0 14px 34px rgba(20, 30, 50, .18);
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #11151b;
+    --panel: #1a2029;
+    --ink: #e7ecf3;
+    --muted: #9aa5b5;
+    --line: #2d3644;
+    --field: #232b37;
+    --blue: #5d93e6;
+    --red: #e4685c;
+    --stripe-gap: #1a2029;
+    --on-accent: #0a1220;
+    --accent: #6a9df0;
+    --accent-hover: #86b0f5;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 14px 34px rgba(0, 0, 0, .55);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 32px;
+}
+.stripe {
+  height: 9px;
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))) calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  background: repeating-linear-gradient(135deg, var(--red) 0 14px, var(--stripe-gap) 14px 24px, var(--blue) 24px 38px, var(--stripe-gap) 38px 48px);
+}
+.top { max-width: 1240px; margin: 0 auto; padding: 22px 0 18px; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 4vw, 34px); letter-spacing: -.01em; margin: 0 0 4px; text-wrap: balance; }
+.top p { margin: 0; color: var(--muted); max-width: 60ch; }
+.app { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+.stage { min-width: 0; }
+.card-wrap { display: flex; justify-content: center; align-items: center; padding: 0; }
+canvas#cv { display: block; background: #fff; box-shadow: var(--shadow); touch-action: none; cursor: grab; max-width: 100%; }
+canvas#cv.grabbing { cursor: grabbing; }
+.hint { margin: 14px 0 0; color: var(--muted); font-size: 13px; text-align: center; text-wrap: balance; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 18px 18px; min-width: 0; }
+.group { padding: 16px 0; border-bottom: 1px solid var(--line); display: grid; gap: 12px; }
+.group:last-of-type { border-bottom: 0; }
+h2 { font-family: var(--font-display); font-size: 13px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 0; display: flex; justify-content: space-between; align-items: baseline; }
+h2 .count { font-family: var(--font-body); letter-spacing: 0; text-transform: none; font-size: 13px; font-variant-numeric: tabular-nums; }
+label.row { display: grid; gap: 6px; font-weight: 500; }
+label.row .line { display: flex; justify-content: space-between; gap: 8px; }
+label.row .val { color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 400; }
+select, input[type="text"] {
+  width: 100%; font: inherit; color: var(--ink); background: var(--field);
+  border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
+}
+input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { font: inherit; cursor: pointer; }
+.btn {
+  border: 1px solid var(--line); background: var(--field); color: var(--ink);
+  border-radius: 6px; padding: 8px 12px; font-weight: 500;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); padding: 12px 14px; font-weight: 600; font-size: 16px; width: 100%; }
+.btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
+.btnrow .btn { flex: 1 1 auto; }
+.notice { min-height: 1.3em; margin: 0; font-size: 13px; color: var(--muted); }
+.thumbs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
+.thumb { display: grid; gap: 4px; }
+.thumb .pic { position: relative; padding: 0; border: 2px solid transparent; border-radius: 6px; background: var(--field); overflow: hidden; aspect-ratio: 1; }
+.thumb .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb.sel .pic { border-color: var(--accent); }
+.thumb.over .pic { border-color: #ff8a00; }
+.thumb .tools { display: flex; justify-content: space-between; }
+.thumb .tools button { flex: 1; border: 0; background: none; color: var(--muted); border-radius: 4px; padding: 0 0 2px; font-size: 18px; line-height: 1.2; }
+.thumb .tools button:hover { color: var(--ink); background: var(--field); }
+.thumb .tools button[disabled] { opacity: .25; cursor: default; background: none; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sw { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); padding: 0; }
+.sw[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type="color"] { width: 34px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--field); cursor: pointer; }
+.dropping .stage::after { content: "Drop photos to add them"; position: fixed; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 82%, transparent); font-family: var(--font-display); font-size: 28px; font-weight: 700; pointer-events: none; z-index: 20; }
+@media (max-width: 880px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .btn { transition: background-color .15s, border-color .15s; }
+}
+</style>
+</head>
+<body>
+<div class="stripe" aria-hidden="true"></div>
+<header class="top">
+  <h1>Grüessli</h1>
+  <p>Place 1 to 20 photos in a grid and save the finished card as an image.</p>
+</header>
+
+<main class="app">
+  <section class="stage" aria-label="Postcard preview">
+    <div class="card-wrap" id="cardWrap"><canvas id="cv" aria-label="Postcard preview"></canvas></div>
+    <p class="hint">Portrait photos get tall cells and landscape photos get wide ones. Drag a photo to reposition it inside its cell and scroll over it to zoom. To swap two photos, drag the dotted handle in a photo's corner onto another photo. Drop image files anywhere on the page to add them.</p>
+  </section>
+
+  <aside class="panel">
+    <section class="group" aria-labelledby="hPhotos">
+      <h2 id="hPhotos">Photos <span class="count" id="count"></span></h2>
+      <div class="btnrow">
+        <button class="btn" id="addBtn" type="button">Add photos</button>
+        <button class="btn" id="undoBtn" type="button" disabled aria-label="Undo last change">Undo</button>
+        <button class="btn" id="shuffleBtn" type="button" disabled>Next arrangement</button>
+        <button class="btn" id="clearBtn" type="button">Clear all</button>
+      </div>
+      <input id="file" type="file" accept="image/*" multiple hidden>
+      <p class="notice" id="notice" role="status" aria-live="polite"></p>
+      <ul class="thumbs" id="thumbs"></ul>
+      <label class="row" for="zoom">
+        <span class="line"><span>Zoom selected photo</span><span class="val" id="zoomVal">100%</span></span>
+        <input id="zoom" type="range" min="1" max="4" step="0.05" value="1" disabled>
+      </label>
+    </section>
+
+    <section class="group" aria-labelledby="hLayout">
+      <h2 id="hLayout">Layout</h2>
+      <label class="row" for="format"><span>A6 orientation</span>
+        <select id="format">
+          <option value="auto" selected>Auto, matches your photos</option>
+          <option value="land">Landscape, 148 × 105 mm</option>
+          <option value="port">Portrait, 105 × 148 mm</option>
+        </select>
+      </label>
+      <label class="row" for="arrange"><span>Arrange in</span>
+        <select id="arrange">
+          <option value="auto" selected>Auto, follows photo shapes</option>
+          <option value="rows">Rows</option>
+          <option value="cols">Columns</option>
+        </select>
+      </label>
+      <label class="row" for="count"><span>Number of rows or columns</span>
+        <select id="count" disabled>
+          <option value="0">Auto</option>
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+          <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+          <option value="7">7</option>
+        </select>
+      </label>
+      <label class="row" for="gap"><span class="line"><span>Space between photos</span><span class="val" id="gapVal"></span></span>
+        <input id="gap" type="range" min="0" max="4" step="0.1" value="1.2">
+      </label>
+      <label class="row" for="margin"><span class="line"><span>Border</span><span class="val" id="marginVal"></span></span>
+        <input id="margin" type="range" min="0" max="8" step="0.1" value="3">
+      </label>
+      <label class="row" for="radius"><span class="line"><span>Rounded corners</span><span class="val" id="radiusVal"></span></span>
+        <input id="radius" type="range" min="0" max="6" step="0.1" value="0.8">
+      </label>
+    </section>
+
+    <section class="group" aria-labelledby="hLook">
+      <h2 id="hLook">Look</h2>
+      <div>
+        <div style="font-weight:500;margin-bottom:8px">Background</div>
+        <div class="swatches" id="swatches"></div>
+      </div>
+      <label class="row" for="caption"><span>Caption (optional)</span>
+        <input id="caption" type="text" maxlength="60" placeholder="Greetings from Lake Lucerne">
+      </label>
+      <label class="row" for="font"><span>Caption style</span>
+        <select id="font">
+          <option value="serif">Serif italic</option>
+          <option value="sans">Bold sans</option>
+          <option value="script">Handwriting</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="group">
+      <button class="btn primary" id="save" type="button">Save as PNG</button>
+      <p class="notice" id="saveInfo"></p>
+    </section>
+  </aside>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var MAX = 20;
+  var FORMATS = {
+    land: { w: 1748, h: 1240 },  /* A6 landscape, 148 x 105 mm at 300 dpi */
+    port: { w: 1240, h: 1748 }   /* A6 portrait, 105 x 148 mm at 300 dpi */
+  };
+  var FONTS = {
+    serif:  { css: 'italic 500 {s}px Georgia, "Times New Roman", serif' },
+    sans:   { css: '700 {s}px system-ui, -apple-system, "Segoe UI", Arial, sans-serif' },
+    script: { css: '400 {s}px "Segoe Script", "Bradley Hand", "Snell Roundhand", "Brush Script MT", cursive' }
+  };
+  var SWATCHES = [
+    ["#ffffff", "White"], ["#f3ead8", "Sand"], ["#111418", "Black"],
+    ["#1d3557", "Navy"], ["#a8c3a0", "Sage"], ["#f2b8b0", "Rose"]
+  ];
+
+  var state = {
+    photos: [], sel: null, format: "auto", arrange: "auto", count: 0, variant: 0, layoutAspects: null,
+    gap: 1.2, margin: 3, radius: 0.8, bg: "#ffffff",
+    caption: "", font: "serif"
+  };
+  var nextId = 1;
+  var lastRects = [];
+  var curFormat = "land";
+  var pk = 1;            /* canvas pixels per CSS pixel in the preview */
+  var swapDrag = null;   /* active drag of a photo handle: { from, over, px, py } */
+  var thumbDrag = -1;    /* index of the thumbnail being dragged */
+
+  var $ = function (id) { return document.getElementById(id); };
+  var cv = $("cv"), ctx = cv.getContext("2d");
+  var wrap = $("cardWrap");
+
+  /* ---------- helpers ---------- */
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function mkCanvas(w, h) { var c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+  function notice(msg) { $("notice").textContent = msg || ""; }
+  function lum(hex) {
+    var h = hex.replace("#", "");
+    if (h.length === 3) h = h.split("").map(function (c) { return c + c; }).join("");
+    var r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  }
+  function makeThumb(src, iw, ih) {
+    var c = mkCanvas(120, 120), g = c.getContext("2d");
+    var s = Math.max(120 / iw, 120 / ih);
+    g.drawImage(src, (120 - iw * s) / 2, (120 - ih * s) / 2, iw * s, ih * s);
+    return c.toDataURL("image/jpeg", 0.75);
+  }
+
+  /* ---------- example photos (drawn, replaced when real photos are added) ---------- */
+  var PAL = [
+    ["#ffb48a", "#f8e3b8", "#fff6dc", "#4d6b4a", "#35523a", "#223a2a"],
+    ["#5f8fd1", "#cfe3f5", "#ffffff", "#8fa4b8", "#5d7389", "#34485c"],
+    ["#5b3f8c", "#f09a8a", "#ffe3b0", "#3b2a5a", "#2a1d44", "#1a1230"],
+    ["#4ab3c4", "#d6f2ee", "#fff2c2", "#e8d9a8", "#3f9c8c", "#25695f"],
+    ["#e8995a", "#f9d9a0", "#fff0c4", "#c4693a", "#9b4a2a", "#6e3320"],
+    ["#e1b04a", "#f5dca0", "#fff8e0", "#b4472a", "#7d3320", "#4a2218"]
+  ];
+  function sampleCanvas(i) {
+    var portrait = i % 3 === 2;
+    var w = portrait ? 675 : 900, h = portrait ? 900 : 675;
+    var c = mkCanvas(w, h), g = c.getContext("2d"), P = PAL[i % PAL.length];
+    var sky = g.createLinearGradient(0, 0, 0, h * 0.7);
+    sky.addColorStop(0, P[0]); sky.addColorStop(1, P[1]);
+    g.fillStyle = sky; g.fillRect(0, 0, w, h);
+    g.fillStyle = P[2]; g.beginPath();
+    g.arc(w * (0.25 + 0.5 * (((i * 37) % 10) / 10)), h * (0.3 + 0.05 * (i % 3)), h * 0.09, 0, Math.PI * 2);
+    g.fill();
+    [3, 4, 5].forEach(function (ci, k) {
+      g.fillStyle = P[ci]; g.beginPath(); g.moveTo(0, h);
+      var base = h * (0.6 + 0.1 * k);
+      for (var x = 0; x <= w; x += 10) {
+        g.lineTo(x, base + Math.sin(x / w * (3 + k * 1.7) + i * 1.3 + k) * h * 0.06);
+      }
+      g.lineTo(w, h); g.closePath(); g.fill();
+    });
+    return c;
+  }
+  function samplePhoto(i) {
+    var c = sampleCanvas(i);
+    return {
+      id: nextId++, full: c, prev: c, iw: c.width, ih: c.height,
+      fx: 0.5, fy: 0.5, zoom: 1, thumb: makeThumb(c, c.width, c.height),
+      sample: true, name: "Example " + (i + 1)
+    };
+  }
+
+  /* ---------- layout ---------- */
+  /* Justified layout: photos keep their order and their own shape. Each row is as wide
+     as the card, cell widths follow the photos' aspect ratios, and row heights are
+     scaled together to fill the card. The cost is the crop needed (|ln scale|). */
+  function solve(a, iw, ih, g, fixed, keep) {
+    var n = a.length, P = [0], i;
+    for (i = 0; i < n; i++) P.push(P[i] + a[i]);
+    var maxRows = fixed ? Math.min(fixed, n) : Math.min(n, 7);
+    var found = [], cuts = [];
+    function rec(start, used, sumH) {
+      if (start === n) {
+        if (fixed && used !== maxRows) return;
+        var avail = ih - g * (used - 1);
+        if (avail <= 0) return;
+        var t = avail / sumH, cost = Math.abs(Math.log(t));
+        if (found.length < keep || cost < found[found.length - 1].cost) {
+          found.push({ cost: cost, t: t, cuts: cuts.slice() });
+          found.sort(function (x, y) { return x.cost - y.cost; });
+          if (found.length > keep) found.pop();
+        }
+        return;
+      }
+      if (used >= maxRows) return;
+      for (var end = start + 1; end <= n; end++) {
+        var hn = (iw - g * (end - start - 1)) / (P[end] - P[start]);
+        if (hn <= 0) break;
+        cuts.push(end); rec(end, used + 1, sumH + hn); cuts.pop();
+      }
+    }
+    rec(0, 0, 0);
+    return found;
+  }
+  function buildRects(sol, a, iw, g, x0, y0) {
+    var rects = new Array(a.length), start = 0, y = y0;
+    sol.cuts.forEach(function (end) {
+      var sumA = 0, i;
+      for (i = start; i < end; i++) sumA += a[i];
+      var hn = (iw - g * (end - start - 1)) / sumA, rh = hn * sol.t, x = x0;
+      for (i = start; i < end; i++) {
+        var w = a[i] * hn;
+        rects[i] = { x: x, y: y, w: w, h: rh };
+        x += w + g;
+      }
+      y += rh + g; start = end;
+    });
+    return rects;
+  }
+  /* Returns the best arrangement plus a few close alternatives (rows or columns)
+     that the "Next arrangement" button cycles through. */
+  function arrange(a, geo, mode, count) {
+    var cands = [], KEEP = 14;
+    if (mode !== "cols") {
+      solve(a, geo.iw, geo.ih, geo.g, count, KEEP).forEach(function (s) {
+        cands.push({ cost: s.cost, rects: buildRects(s, a, geo.iw, geo.g, geo.x0, geo.y0) });
+      });
+    }
+    if (mode !== "rows") {
+      var at = a.map(function (v) { return 1 / v; });
+      solve(at, geo.ih, geo.iw, geo.g, count, KEEP).forEach(function (s) {
+        var rt = buildRects(s, at, geo.ih, geo.g, 0, 0);
+        cands.push({
+          cost: s.cost,
+          rects: rt.map(function (r) { return { x: geo.x0 + r.y, y: geo.y0 + r.x, w: r.h, h: r.w }; })
+        });
+      });
+    }
+    if (!cands.length) return null;
+    cands.sort(function (x, y) { return x.cost - y.cost; });
+    var limit = cands[0].cost + 0.25, seen = {}, out = [];
+    cands.forEach(function (c) {
+      if (c.cost > limit || out.length >= 8) return;
+      var sig = c.rects.map(function (r) {
+        return [r.x, r.y, r.w, r.h].map(Math.round).join(",");
+      }).join(";");
+      if (seen[sig]) return;
+      seen[sig] = 1; out.push(c);
+    });
+    return { cost: out[0].cost, variants: out };
+  }
+  function fallbackRects(n, geo) {
+    var cols = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n / cols), out = [];
+    var cw = (geo.iw - geo.g * (cols - 1)) / cols, rh = (geo.ih - geo.g * (rows - 1)) / rows;
+    for (var i = 0; i < n; i++) {
+      out.push({ x: geo.x0 + (i % cols) * (cw + geo.g), y: geo.y0 + Math.floor(i / cols) * (rh + geo.g), w: cw, h: rh });
+    }
+    return out;
+  }
+  function geometry(W, H) {
+    var s = Math.min(W, H);
+    var m = state.margin / 100 * s;
+    var g = state.gap / 100 * s;
+    var cap = state.caption.trim() ? Math.round(H * 0.11) : 0;
+    return { s: s, m: m, g: g, cap: cap, x0: m, y0: m, iw: W - 2 * m, ih: H - 2 * m - cap };
+  }
+  var planCache = {}, planCount = 0;
+  function plan(W, H) {
+    var n = state.photos.length;
+    if (!n) return { cost: 0, variants: [{ cost: 0, rects: [] }] };
+    var geo = geometry(W, H);
+    /* The grid is computed from layoutAspects, which stay put when two photos are swapped. */
+    if (!state.layoutAspects || state.layoutAspects.length !== n) {
+      state.layoutAspects = state.photos.map(function (p) { return p.iw / p.ih; });
+    }
+    var a = state.layoutAspects;
+    var key = [W, H, state.margin, state.gap, geo.cap, state.arrange, state.count,
+      a.map(function (v) { return v.toFixed(4); }).join(",")].join("|");
+    if (planCache[key]) return planCache[key];
+    var best = arrange(a, geo, state.arrange, state.count) ||
+      { cost: 9, variants: [{ cost: 9, rects: fallbackRects(n, geo) }] };
+    if (planCount++ > 40) { planCache = {}; planCount = 0; }
+    planCache[key] = best;
+    return best;
+  }
+  /* The arrangement is always computed at the fixed A6 reference size and then scaled, so the
+     preview, the variant count and the saved image all show exactly the same grid. */
+  function refSize(W, H) { return FORMATS[W >= H ? "land" : "port"]; }
+  function variantsFor(W, H) { var ref = refSize(W, H); return plan(ref.w, ref.h).variants; }
+  function layout(W, H) {
+    var ref = refSize(W, H), v = variantsFor(W, H);
+    var sx = W / ref.w, sy = H / ref.h;
+    return v[state.variant % v.length].rects.map(function (r) {
+      return { x: r.x * sx, y: r.y * sy, w: r.w * sx, h: r.h * sy };
+    });
+  }
+
+  /* "Auto" orientation: pick landscape or portrait, whichever crops the photos less. */
+  function resolveFormat() {
+    if (state.format !== "auto") return state.format;
+    if (!state.photos.length) return "land";
+    var l = plan(FORMATS.land.w, FORMATS.land.h), p = plan(FORMATS.port.w, FORMATS.port.h);
+    return p.cost < l.cost - 0.02 ? "port" : "land";
+  }
+  function cover(p, r) {
+    var base = Math.max(r.w / p.iw, r.h / p.ih) * p.zoom;
+    var dw = p.iw * base, dh = p.ih * base;
+    return { w: dw, h: dh, x: r.x - (dw - r.w) * p.fx, y: r.y - (dh - r.h) * p.fy };
+  }
+  function pathRect(g, r, rad) {
+    g.beginPath();
+    if (rad > 0 && g.roundRect) g.roundRect(r.x, r.y, r.w, r.h, rad);
+    else g.rect(r.x, r.y, r.w, r.h);
+  }
+
+  /* ---------- drawing (same code for preview and export) ---------- */
+  /* Preview-only overlays: a grip handle on every cell, plus the swap-drag feedback. */
+  function handleRect(r) {
+    var hs = Math.min(30 * pk, Math.min(r.w, r.h) * 0.4), pad = Math.min(6 * pk, hs * 0.25);
+    return { x: r.x + pad, y: r.y + pad, w: hs, h: hs };
+  }
+  function inHandle(r, q) {
+    var h = handleRect(r), m = 6 * pk;
+    return q.x >= h.x - m && q.x <= h.x + h.w + m && q.y >= h.y - m && q.y <= h.y + h.h + m;
+  }
+  function drawOverlays(g, rects) {
+    var i, h, cx, cy;
+    for (i = 0; i < rects.length; i++) {
+      h = handleRect(rects[i]);
+      g.save();
+      g.fillStyle = "rgba(15,20,30,.62)";
+      g.beginPath();
+      if (g.roundRect) g.roundRect(h.x, h.y, h.w, h.h, 6 * pk); else g.rect(h.x, h.y, h.w, h.h);
+      g.fill();
+      g.fillStyle = "#ffffff";
+      for (cx = 0; cx < 2; cx++) for (cy = 0; cy < 3; cy++) {
+        g.beginPath();
+        g.arc(h.x + h.w * (0.36 + 0.28 * cx), h.y + h.h * (0.26 + 0.24 * cy), h.w * 0.065, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.restore();
+    }
+    if (!swapDrag || !rects[swapDrag.from]) return;
+    var src = rects[swapDrag.from], p = state.photos[swapDrag.from];
+    g.save();
+    g.fillStyle = "rgba(0,0,0,.35)"; g.fillRect(src.x, src.y, src.w, src.h);
+    if (swapDrag.over >= 0 && swapDrag.over !== swapDrag.from) {
+      var t = rects[swapDrag.over];
+      g.fillStyle = "rgba(255,138,0,.28)"; g.fillRect(t.x, t.y, t.w, t.h);
+      g.lineWidth = 4 * pk; g.strokeStyle = "#ff8a00";
+      g.strokeRect(t.x + 2 * pk, t.y + 2 * pk, t.w - 4 * pk, t.h - 4 * pk);
+    }
+    var gs = 90 * pk, gx = swapDrag.px - gs / 2, gy = swapDrag.py - gs / 2;
+    var s = Math.max(gs / p.prev.width, gs / p.prev.height);
+    g.globalAlpha = 0.92; g.shadowColor = "rgba(0,0,0,.45)"; g.shadowBlur = 12 * pk;
+    g.save();
+    g.beginPath(); g.rect(gx, gy, gs, gs); g.clip();
+    g.drawImage(p.prev, gx + (gs - p.prev.width * s) / 2, gy + (gs - p.prev.height * s) / 2, p.prev.width * s, p.prev.height * s);
+    g.restore();
+    g.shadowBlur = 0; g.lineWidth = 3 * pk; g.strokeStyle = "#ffffff";
+    g.strokeRect(gx, gy, gs, gs);
+    g.restore();
+  }
+
+  function draw(g, W, H, preview) {
+    g.fillStyle = state.bg; g.fillRect(0, 0, W, H);
+    var rects = layout(W, H), geo = geometry(W, H);
+    var rad = state.radius / 100 * geo.s;
+
+    if (!state.photos.length) {
+      g.fillStyle = lum(state.bg) > 0.5 ? "#566274" : "#9aa5b5";
+      g.textAlign = "center"; g.textBaseline = "middle";
+      g.font = "500 " + Math.round(W * 0.03) + "px system-ui, sans-serif";
+      g.fillText("Add photos to start your postcard", W / 2, H / 2);
+      return rects;
+    }
+
+    state.photos.forEach(function (p, i) {
+      var r = rects[i], src = preview ? p.prev : p.full, d = cover(p, r);
+      g.save(); pathRect(g, r, rad); g.clip();
+      g.drawImage(src, d.x, d.y, d.w, d.h);
+      g.restore();
+    });
+
+    var t = state.caption.trim();
+    if (t) {
+      var dark = lum(state.bg) < 0.5;
+      g.fillStyle = dark ? "#f5f5f5" : "#1c2430";
+      g.textAlign = "center"; g.textBaseline = "middle";
+      var size = geo.cap * 0.56, tpl = FONTS[state.font].css;
+      g.font = tpl.replace("{s}", size);
+      var maxW = geo.iw * 0.96, tw = g.measureText(t).width;
+      if (tw > maxW) { size = size * maxW / tw; g.font = tpl.replace("{s}", size); }
+      g.fillText(t, W / 2, geo.y0 + geo.ih + geo.cap / 2 + size * 0.04);
+    }
+
+    if (preview && state.sel != null) {
+      var si = state.photos.findIndex(function (p) { return p.id === state.sel; });
+      if (si >= 0) {
+        var r2 = rects[si];
+        g.save();
+        g.lineWidth = Math.max(2, W * 0.004);
+        g.strokeStyle = "#1d6fff";
+        g.shadowColor = "rgba(255,255,255,.9)"; g.shadowBlur = 2;
+        pathRect(g, { x: r2.x + g.lineWidth / 2, y: r2.y + g.lineWidth / 2, w: r2.w - g.lineWidth, h: r2.h - g.lineWidth }, rad);
+        g.stroke();
+        g.restore();
+      }
+    }
+    if (preview) drawOverlays(g, rects);
+    return rects;
+  }
+
+  function render() {
+    var f = resolveFormat();
+    if (f !== curFormat) { curFormat = f; fit(); return; }
+    lastRects = draw(ctx, cv.width, cv.height, true);
+    updateShuffle();
+  }
+  function updateShuffle() {
+    var n = variantsFor(cv.width, cv.height).length, b = $("shuffleBtn");
+    var txt = n < 2 ? "Next arrangement" : "Next arrangement (" + (state.variant % n + 1) + " of " + n + ")";
+    b.disabled = n < 2;
+    if (b.textContent !== txt) b.textContent = txt;
+  }
+
+  function fit() {
+    var f = FORMATS[curFormat];
+    var avail = Math.max(240, wrap.clientWidth);
+    var maxH = Math.max(320, window.innerHeight * 0.74);
+    var w = Math.min(avail, maxH * f.w / f.h);
+    var h = w * f.h / f.w;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    pk = dpr;
+    cv.style.width = w + "px"; cv.style.height = h + "px";
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    render();
+  }
+
+  /* ---------- photos list ---------- */
+  function selIndex() {
+    return state.photos.findIndex(function (p) { return p.id === state.sel; });
+  }
+  function syncZoom() {
+    var i = selIndex(), z = $("zoom");
+    if (i < 0) { z.disabled = true; z.value = 1; $("zoomVal").textContent = "100%"; return; }
+    z.disabled = false; z.value = state.photos[i].zoom;
+    $("zoomVal").textContent = Math.round(state.photos[i].zoom * 100) + "%";
+  }
+  function renderThumbs() {
+    var ul = $("thumbs"); ul.innerHTML = "";
+    var n = state.photos.length;
+    state.photos.forEach(function (p, i) {
+      var li = document.createElement("li");
+      li.className = "thumb" + (p.id === state.sel ? " sel" : "");
+      li.draggable = true;
+      li.addEventListener("dragstart", function (ev) {
+        thumbDrag = i;
+        ev.dataTransfer.setData("text/plain", "photo " + (i + 1));
+        ev.dataTransfer.effectAllowed = "move";
+      });
+      li.addEventListener("dragend", function () { thumbDrag = -1; });
+      li.addEventListener("dragover", function (ev) {
+        if (thumbDrag < 0) return;
+        ev.preventDefault(); li.classList.add("over");
+      });
+      li.addEventListener("dragleave", function () { li.classList.remove("over"); });
+      li.addEventListener("drop", function (ev) {
+        if (thumbDrag < 0) return;
+        ev.preventDefault();
+        var from = thumbDrag; thumbDrag = -1;
+        if (from !== i) { swapPhotos(from, i); notice("Swapped photo " + (from + 1) + " and photo " + (i + 1) + "."); }
+        else li.classList.remove("over");
+      });
+      var pic = document.createElement("button");
+      pic.type = "button"; pic.className = "pic";
+      pic.setAttribute("aria-label", "Select photo " + (i + 1));
+      pic.setAttribute("aria-pressed", p.id === state.sel ? "true" : "false");
+      var img = document.createElement("img"); img.src = p.thumb; img.alt = ""; img.draggable = false;
+      pic.appendChild(img);
+      pic.addEventListener("click", function () { select(p.id); });
+      var tools = document.createElement("div"); tools.className = "tools";
+      tools.appendChild(toolBtn("‹", "Move photo " + (i + 1) + " earlier", i === 0, function () { move(i, -1); }));
+      tools.appendChild(toolBtn("×", "Remove photo " + (i + 1), false, function () { removeAt(i); }));
+      tools.appendChild(toolBtn("›", "Move photo " + (i + 1) + " later", i === n - 1, function () { move(i, 1); }));
+      li.appendChild(pic); li.appendChild(tools); ul.appendChild(li);
+    });
+    var hasSample = state.photos.some(function (p) { return p.sample; });
+    $("count").textContent = n + " / " + MAX + (hasSample ? " (examples)" : "");
+    $("addBtn").disabled = n >= MAX && !hasSample;
+    $("save").disabled = n === 0;
+    $("clearBtn").disabled = n === 0;
+  }
+  /* ---------- undo (last 3 changes to the photo list) ---------- */
+  var UNDO_MAX = 3, undoStack = [];
+  function sameList(a, b) {
+    return a.length === b.length && a.every(function (p, i) { return p === b[i]; });
+  }
+  function release(list) {
+    list.forEach(function (p) {
+      if (!p.url) return;
+      var used = state.photos.indexOf(p) >= 0 ||
+        undoStack.some(function (e) { return e.photos.indexOf(p) >= 0; });
+      if (!used) { URL.revokeObjectURL(p.url); p.url = null; }
+    });
+  }
+  function updateUndo() {
+    var b = $("undoBtn"), n = undoStack.length;
+    b.disabled = n === 0;
+    b.textContent = n ? "Undo (" + n + ")" : "Undo";
+  }
+  function pushUndo() {
+    undoStack.push({ photos: state.photos.slice(), sel: state.sel, variant: state.variant, aspects: state.layoutAspects });
+    state.variant = 0;
+    state.layoutAspects = null;
+    while (undoStack.length > UNDO_MAX) release(undoStack.shift().photos);
+    updateUndo();
+  }
+  function undo() {
+    if (!undoStack.length) return;
+    var e = undoStack.pop(), gone = state.photos;
+    state.photos = e.photos;
+    state.variant = e.variant;
+    state.layoutAspects = e.aspects;
+    state.sel = e.photos.some(function (p) { return p.id === e.sel; })
+      ? e.sel : (e.photos.length ? e.photos[0].id : null);
+    release(gone);
+    notice("Undid the last change.");
+    renderThumbs(); syncZoom(); render(); updateUndo();
+  }
+  /* Swap two photos. The grid keeps its shape: each photo simply takes the other's cell. */
+  function swapPhotos(i, j) {
+    if (i === j || !state.photos[i] || !state.photos[j]) return;
+    var keepAspects = state.layoutAspects, keepVariant = state.variant;
+    pushUndo();
+    state.layoutAspects = keepAspects; state.variant = keepVariant;
+    var t = state.photos[i]; state.photos[i] = state.photos[j]; state.photos[j] = t;
+    renderThumbs(); render();
+  }
+  /* end undo */
+
+  function toolBtn(label, aria, disabled, fn) {
+    var b = document.createElement("button");
+    b.type = "button"; b.textContent = label; b.disabled = disabled;
+    b.setAttribute("aria-label", aria);
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function select(id) {
+    state.sel = id; renderThumbs(); syncZoom(); render();
+  }
+  function move(i, d) {
+    var j = i + d;
+    if (j < 0 || j >= state.photos.length) return;
+    pushUndo();
+    var t = state.photos[i]; state.photos[i] = state.photos[j]; state.photos[j] = t;
+    renderThumbs(); render();
+  }
+  function removeAt(i) {
+    pushUndo();
+    var p = state.photos[i];
+    state.photos.splice(i, 1);
+    if (p.id === state.sel) state.sel = null;
+    notice(""); renderThumbs(); syncZoom(); render();
+  }
+
+  /* ---------- loading files ---------- */
+  function loadPhoto(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var iw = img.naturalWidth, ih = img.naturalHeight;
+        if (!iw || !ih) { reject(new Error("empty")); return; }
+        var k = Math.min(1, 1200 / Math.max(iw, ih));
+        var prev = mkCanvas(Math.round(iw * k), Math.round(ih * k));
+        prev.getContext("2d").drawImage(img, 0, 0, prev.width, prev.height);
+        resolve({
+          id: nextId++, full: img, prev: prev, iw: iw, ih: ih,
+          fx: 0.5, fy: 0.5, zoom: 1, thumb: makeThumb(prev, prev.width, prev.height),
+          url: url, name: file.name
+        });
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("load")); };
+      img.src = url;
+    });
+  }
+  async function addFiles(fileList) {
+    var files = Array.prototype.slice.call(fileList).filter(function (f) { return /^image\//.test(f.type); });
+    if (!files.length) { notice("Those files are not images."); return; }
+    pushUndo();
+    if (state.photos.some(function (p) { return p.sample; })) { state.photos = []; state.sel = null; }
+    var room = MAX - state.photos.length;
+    var take = files.slice(0, room), skipped = files.length - take.length, failed = 0;
+    notice("Loading " + take.length + (take.length === 1 ? " photo…" : " photos…"));
+    for (var i = 0; i < take.length; i++) {
+      try { state.photos.push(await loadPhoto(take[i])); } catch (e) { failed++; }
+    }
+    var parts = [];
+    if (skipped) parts.push(skipped + " not added (limit is " + MAX + ")");
+    if (failed) parts.push(failed + " could not be read");
+    var snap = undoStack[undoStack.length - 1];
+    if (snap && sameList(snap.photos, state.photos)) {
+      undoStack.pop(); state.variant = snap.variant; state.layoutAspects = snap.aspects; updateUndo();
+    }
+    notice(parts.join("; "));
+    if (state.photos.length && selIndex() < 0) state.sel = state.photos[state.photos.length - 1].id;
+    renderThumbs(); syncZoom(); render();
+  }
+
+  /* ---------- canvas interaction ---------- */
+  function pos(e) {
+    var b = cv.getBoundingClientRect(), k = cv.width / b.width;
+    return { x: (e.clientX - b.left) * k, y: (e.clientY - b.top) * k };
+  }
+  function hitAt(x, y) {
+    for (var i = 0; i < lastRects.length; i++) {
+      var r = lastRects[i];
+      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return i;
+    }
+    return -1;
+  }
+  function hit(e) { var q = pos(e); return hitAt(q.x, q.y); }
+  var drag = null;
+  cv.addEventListener("pointerdown", function (e) {
+    var q = pos(e), i = hitAt(q.x, q.y); if (i < 0) return;
+    var p = state.photos[i];
+    if (p.id !== state.sel) { state.sel = p.id; renderThumbs(); syncZoom(); }
+    cv.setPointerCapture(e.pointerId); cv.classList.add("grabbing");
+    if (inHandle(lastRects[i], q)) swapDrag = { from: i, over: -1, px: q.x, py: q.y };
+    else drag = { i: i, x: e.clientX, y: e.clientY, fx: p.fx, fy: p.fy };
+    render();
+  });
+  cv.addEventListener("pointermove", function (e) {
+    if (swapDrag) {
+      var q = pos(e);
+      swapDrag.px = q.x; swapDrag.py = q.y; swapDrag.over = hitAt(q.x, q.y);
+      render(); return;
+    }
+    if (!drag) {
+      var q2 = pos(e), hi = hitAt(q2.x, q2.y);
+      cv.style.cursor = hi >= 0 && inHandle(lastRects[hi], q2) ? "move" : "";
+      return;
+    }
+    var p = state.photos[drag.i], r = lastRects[drag.i]; if (!p || !r) return;
+    var d = cover(p, r), k = cv.width / cv.getBoundingClientRect().width;
+    var ox = d.w - r.w, oy = d.h - r.h;
+    if (ox > 1) p.fx = clamp(drag.fx - (e.clientX - drag.x) * k / ox, 0, 1);
+    if (oy > 1) p.fy = clamp(drag.fy - (e.clientY - drag.y) * k / oy, 0, 1);
+    render();
+  });
+  function endDrag(e) {
+    if (swapDrag) {
+      var s = swapDrag;
+      swapDrag = null;
+      if (e && e.type === "pointerup" && s.over >= 0 && s.over !== s.from) {
+        swapPhotos(s.from, s.over);
+        notice("Swapped photo " + (s.from + 1) + " and photo " + (s.over + 1) + ".");
+      } else render();
+    }
+    drag = null; cv.classList.remove("grabbing");
+  }
+  cv.addEventListener("pointerup", endDrag);
+  cv.addEventListener("pointercancel", endDrag);
+  cv.addEventListener("wheel", function (e) {
+    var i = hit(e); if (i < 0) return;
+    e.preventDefault();
+    var p = state.photos[i];
+    p.zoom = clamp(p.zoom * Math.exp(-e.deltaY * 0.0015), 1, 4);
+    if (p.id !== state.sel) { state.sel = p.id; renderThumbs(); }
+    syncZoom(); render();
+  }, { passive: false });
+
+  /* ---------- controls ---------- */
+  $("addBtn").addEventListener("click", function () { $("file").click(); });
+  $("file").addEventListener("change", function (e) { addFiles(e.target.files); e.target.value = ""; });
+  $("clearBtn").addEventListener("click", function () {
+    pushUndo();
+    state.photos = []; state.sel = null; notice("");
+    renderThumbs(); syncZoom(); render();
+  });
+  $("undoBtn").addEventListener("click", undo);
+  document.addEventListener("keydown", function (e) {
+    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== "z") return;
+    var t = e.target && e.target.tagName;
+    if (t === "INPUT" && e.target.type === "text") return;
+    e.preventDefault(); undo();
+  });
+  $("zoom").addEventListener("input", function (e) {
+    var i = selIndex(); if (i < 0) return;
+    state.photos[i].zoom = parseFloat(e.target.value);
+    $("zoomVal").textContent = Math.round(state.photos[i].zoom * 100) + "%";
+    render();
+  });
+  $("format").addEventListener("change", function (e) { state.format = e.target.value; state.variant = 0; render(); });
+  $("shuffleBtn").addEventListener("click", function () {
+    var n = variantsFor(cv.width, cv.height).length;
+    if (n < 2) return;
+    state.variant = (state.variant + 1) % n;
+    render();
+  });
+  $("arrange").addEventListener("change", function (e) {
+    state.arrange = e.target.value; state.variant = 0;
+    var auto = state.arrange === "auto";
+    $("count").disabled = auto;
+    if (auto) { $("count").value = "0"; state.count = 0; }
+    render();
+  });
+  $("count").addEventListener("change", function (e) { state.count = parseInt(e.target.value, 10); state.variant = 0; render(); });
+  function bindRange(id, key, valId, fmt) {
+    var el = $(id);
+    function upd() { state[key] = parseFloat(el.value); $(valId).textContent = fmt(state[key]); render(); }
+    el.addEventListener("input", upd);
+    $(valId).textContent = fmt(parseFloat(el.value));
+  }
+  bindRange("gap", "gap", "gapVal", function (v) { return v === 0 ? "None" : v.toFixed(1); });
+  bindRange("margin", "margin", "marginVal", function (v) { return v === 0 ? "None" : v.toFixed(1); });
+  bindRange("radius", "radius", "radiusVal", function (v) { return v === 0 ? "Square" : v.toFixed(1); });
+  $("caption").addEventListener("input", function (e) { state.caption = e.target.value; render(); });
+  $("font").addEventListener("change", function (e) { state.font = e.target.value; render(); });
+
+  var swWrap = $("swatches"), colorIn = document.createElement("input");
+  function setBg(hex) {
+    state.bg = hex;
+    Array.prototype.forEach.call(swWrap.querySelectorAll(".sw"), function (b) {
+      b.setAttribute("aria-pressed", b.dataset.hex === hex ? "true" : "false");
+    });
+    colorIn.value = hex; render();
+  }
+  SWATCHES.forEach(function (s) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "sw"; b.style.background = s[0]; b.dataset.hex = s[0];
+    b.setAttribute("aria-label", "Background " + s[1]); b.title = s[1];
+    b.addEventListener("click", function () { setBg(s[0]); });
+    swWrap.appendChild(b);
+  });
+  colorIn.type = "color"; colorIn.value = state.bg; colorIn.id = "bgColor";
+  colorIn.setAttribute("aria-label", "Custom background color");
+  colorIn.addEventListener("input", function () { setBg(colorIn.value); });
+  swWrap.appendChild(colorIn);
+
+  /* ---------- save ---------- */
+  $("save").addEventListener("click", function () {
+    var f = FORMATS[curFormat];
+    var c = mkCanvas(f.w, f.h);
+    draw(c.getContext("2d"), f.w, f.h, false);
+    c.toBlob(function (blob) {
+      if (!blob) { $("saveInfo").textContent = "Could not create the image. Try a smaller card size."; return; }
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = "postcard.png";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      $("saveInfo").textContent = "Saved postcard.png (" + f.w + " × " + f.h + " px, 300 dpi at print size).";
+    }, "image/png");
+  });
+
+  /* ---------- drag & drop files ---------- */
+  var depth = 0;
+  function hasFiles(e) { return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], "Files") >= 0; }
+  window.addEventListener("dragenter", function (e) { if (hasFiles(e)) { depth++; document.body.classList.add("dropping"); } });
+  window.addEventListener("dragleave", function (e) { if (hasFiles(e) && --depth <= 0) { depth = 0; document.body.classList.remove("dropping"); } });
+  window.addEventListener("dragover", function (e) { if (hasFiles(e)) e.preventDefault(); });
+  window.addEventListener("drop", function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); depth = 0; document.body.classList.remove("dropping");
+    addFiles(e.dataTransfer.files);
+  });
+
+  /* ---------- start ---------- */
+  for (var i = 0; i < 6; i++) state.photos.push(samplePhoto(i));
+  state.sel = state.photos[0].id;
+  renderThumbs(); syncZoom(); fit();
+  window.addEventListener("resize", fit);
+  if (window.ResizeObserver) new ResizeObserver(function () {
+    var want = Math.max(240, wrap.clientWidth);
+    if (Math.abs(want - (parseFloat(cv.style.width) || 0)) > 1 && want < parseFloat(cv.style.width)) fit();
+  }).observe(wrap);
+})();
+</script>
+</body>
+</html>
