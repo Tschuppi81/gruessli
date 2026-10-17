@@ -15,6 +15,43 @@ const PORT = Number(process.env.PORT || 80)
 const DATA_DIR = process.env.DATA_DIR || '/data'
 const COUNT_FILE = join(DATA_DIR, 'count.json')
 
+// Per-IP rate limit for the increment endpoint: at most RATE_MAX increments
+// per RATE_WINDOW_MS, using a fixed window. This caps how far any single
+// client can distort the counter; it is not real authentication (the endpoint
+// is public by design), just a brake on bots and runaway loops.
+const RATE_MAX = Number(process.env.RATE_MAX || 10)
+const RATE_WINDOW_MS = Number(process.env.RATE_WINDOW_MS || 60_000)
+const hits = new Map() // ip -> { count, resetAt }
+
+// Trust the proxy-supplied visitor IP (Caddy/cloudflared set Cf-Connecting-Ip;
+// X-Forwarded-For is the fallback), then the raw socket for local runs.
+function clientIp(req) {
+  const cf = req.headers['cf-connecting-ip']
+  if (cf) return String(cf)
+  const xff = req.headers['x-forwarded-for']
+  if (xff) return String(xff).split(',')[0].trim()
+  return req.socket.remoteAddress || 'unknown'
+}
+
+// Returns null if allowed, or the seconds to wait if the limit is exceeded.
+function rateLimited(ip) {
+  const now = Date.now()
+  const e = hits.get(ip)
+  if (!e || now >= e.resetAt) {
+    hits.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS })
+    return null
+  }
+  if (e.count >= RATE_MAX) return Math.ceil((e.resetAt - now) / 1000)
+  e.count += 1
+  return null
+}
+
+// Drop expired entries periodically so the map can't grow without bound.
+setInterval(() => {
+  const now = Date.now()
+  for (const [ip, e] of hits) if (now >= e.resetAt) hits.delete(ip)
+}, RATE_WINDOW_MS).unref()
+
 // Serve the single static page from memory — it never changes at runtime.
 const INDEX_HTML = readFileSync(join(__dirname, 'index.html'))
 
@@ -59,6 +96,11 @@ const server = createServer(async (req, res) => {
   if (url === '/api/count') {
     if (req.method === 'GET') return sendJson(res, 200, { count })
     if (req.method === 'POST') {
+      const retry = rateLimited(clientIp(req))
+      if (retry !== null) {
+        res.setHeader('retry-after', String(retry))
+        return sendJson(res, 429, { error: 'rate_limited', count })
+      }
       count += 1
       await persist()
       return sendJson(res, 200, { count })
