@@ -2,3 +2,10 @@
 .idea
 *.log
 README.md
+node_modules
+test
+e2e
+.e2e-data
+test-results
+playwright-report
+playwright.config.ts

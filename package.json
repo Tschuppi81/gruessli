@@ -1,0 +1,14 @@
+{
+  "name": "gruessli",
+  "private": true,
+  "version": "2026.1",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test \"test/*.test.js\"",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}

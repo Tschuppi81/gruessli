@@ -8,7 +8,7 @@ import { createServer } from 'node:http'
 import { readFile, writeFile, rename, mkdir } from 'node:fs/promises'
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PORT = Number(process.env.PORT || 80)
@@ -34,8 +34,8 @@ function clientIp(req) {
 }
 
 // Returns null if allowed, or the seconds to wait if the limit is exceeded.
-function rateLimited(ip) {
-  const now = Date.now()
+// `now` is injectable so the fixed-window behaviour can be tested deterministically.
+function rateLimited(ip, now = Date.now()) {
   const e = hits.get(ip)
   if (!e || now >= e.resetAt) {
     hits.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS })
@@ -52,8 +52,9 @@ setInterval(() => {
   for (const [ip, e] of hits) if (now >= e.resetAt) hits.delete(ip)
 }, RATE_WINDOW_MS).unref()
 
-// Serve the single static page from memory — it never changes at runtime.
+// Serve the static assets from memory — they never change at runtime.
 const INDEX_HTML = readFileSync(join(__dirname, 'index.html'))
+const LAYOUT_JS = readFileSync(join(__dirname, 'layout.js'))
 
 // In-memory counter, loaded once at startup and persisted on every increment.
 let count = 0
@@ -109,6 +110,11 @@ const server = createServer(async (req, res) => {
     return res.end()
   }
 
+  if (url === '/layout.js') {
+    res.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8' })
+    return res.end(LAYOUT_JS)
+  }
+
   if (url === '/healthz') {
     res.writeHead(200, { 'content-type': 'text/plain' })
     return res.end('ok')
@@ -119,5 +125,12 @@ const server = createServer(async (req, res) => {
   res.end(INDEX_HTML)
 })
 
-await loadCount()
-server.listen(PORT, () => console.log(`Grüessli listening on :${PORT}`))
+// Only bind a port when run directly (`node server.js`); importing the module
+// in tests just pulls in the helpers below without starting a listener.
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href
+if (isMain) {
+  await loadCount()
+  server.listen(PORT, () => console.log(`Grüessli listening on :${PORT}`))
+}
+
+export { server, rateLimited, clientIp, hits, RATE_MAX, RATE_WINDOW_MS, COUNT_FILE }
