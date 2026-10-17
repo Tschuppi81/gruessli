@@ -64,6 +64,9 @@ body {
 .top { max-width: 1240px; margin: 0 auto; padding: 22px 0 18px; }
 h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 4vw, 34px); letter-spacing: -.01em; margin: 0 0 4px; text-wrap: balance; }
 .top p { margin: 0; color: var(--muted); max-width: 60ch; }
+.made { margin-top: 8px !important; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.made::before { content: "✉"; color: var(--blue); }
+.made strong { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
 .app { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
 .stage { min-width: 0; }
 .card-wrap { display: flex; justify-content: center; align-items: center; padding: 0; }
@@ -124,6 +127,7 @@ input[type="color"] { width: 34px; height: 30px; padding: 0; border: 1px solid v
 <header class="top">
   <h1>Grüessli</h1>
   <p>Place 1 to 20 photos in a grid and save the finished card as an image.</p>
+  <p class="made" id="madeCount" hidden><strong id="madeNum">0</strong> postcards created</p>
 </header>
 
 <main class="app">
@@ -880,8 +884,27 @@ input[type="color"] { width: 34px; height: 30px; padding: 0; border: 1px solid v
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
       $("saveInfo").textContent = "Saved postcard.png (" + f.w + " × " + f.h + " px, 300 dpi at print size).";
+      bumpCount();
     }, "image/png");
   });
+
+  /* ---------- "postcards created" counter (served by server.js) ---------- */
+  function showCount(n) {
+    if (typeof n !== "number" || !isFinite(n)) return;
+    $("madeNum").textContent = n.toLocaleString();
+    $("madeCount").hidden = false;
+  }
+  function fetchCount() {
+    fetch("/api/count").then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { if (d) showCount(d.count); })
+      .catch(function () { /* offline or opened as a local file — hide the badge */ });
+  }
+  function bumpCount() {
+    fetch("/api/count", { method: "POST" }).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { if (d) showCount(d.count); })
+      .catch(function () { /* counter unreachable — saving still worked */ });
+  }
+  fetchCount();
 
   /* ---------- drag & drop files ---------- */
   var depth = 0;

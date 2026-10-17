@@ -4,8 +4,13 @@ services:
     container_name: gruessli
     networks:
       - caddy_net
+    volumes:
+      - gruessli-data:/data
     restart: unless-stopped
 
 networks:
   caddy_net:
     external: true
+
+volumes:
+  gruessli-data:
