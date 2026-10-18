@@ -46,3 +46,5 @@ label removed in 9f8a55f).
       circle, added a light-blue swatch, and reordered swatches bright → dark.
 - [x] Tooltips on the per-thumbnail controls — the ‹ / × / › buttons now carry
       a localized hover `title` (reusing their aria-label).
+- [x] Clearer German labels for the ‹ / › reorder buttons ("an die
+      vorherige/nächste Stelle schieben" instead of "nach vorne/hinten").
