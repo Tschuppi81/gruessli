@@ -745,7 +745,7 @@ import { arrange, fallbackRects } from "./layout.js";
   function toolBtn(label, aria, disabled, fn) {
     var b = document.createElement("button");
     b.type = "button"; b.textContent = label; b.disabled = disabled;
-    b.setAttribute("aria-label", aria);
+    b.setAttribute("aria-label", aria); b.title = aria;
     b.addEventListener("click", fn);
     return b;
   }
