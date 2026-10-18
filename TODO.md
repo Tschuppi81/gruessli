@@ -33,21 +33,16 @@ label removed in 9f8a55f).
       hostname → HTTP → `caddy:80` (done for `www.gruessli.ch`, proxied CNAME to
       Cloudflare anycast IPs; app responds 200).
 
-## homelab-infra
-- [ ] Commit the `skip_proxy` flag added to `playbooks/deploy-app.yml`
-      (uncommitted — lets you deploy an app before its DNS exists).
-
 ## Done
 - [x] Favicon — inline SVG postcard-with-photo-grid icon in `index.html`
       (data-URI, no extra file).
+- [x] Background color picker — custom-colour input restyled as a rainbow
+      circle, added a light-blue swatch, and reordered swatches bright → dark.
 
 ## Nice-to-have
 - [ ] Tooltips on the per-thumbnail controls — the ‹ (earlier), × (remove) and
       › (later) buttons under each photo have aria-labels but no hover `title`
       tooltip; add titles (localized) so the icons are self-explanatory.
-- [ ] Background color picker — a nicer/more prominent picker than the current
-      small native color input beside the swatches (e.g. a larger swatch grid or
-      a hue/eyedropper control).
 - [ ] Back up the `gruessli-data` volume (holds the postcard counter) — it is a
       named Docker volume, not Postgres, so it is outside the DB-backup flow.
 - [ ] Consider abuse protection beyond rate limiting if the counter matters
