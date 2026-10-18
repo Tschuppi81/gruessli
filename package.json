@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
+    "dev": "PORT=8787 DATA_DIR=./.devdata node --watch-path=./server.js --watch-path=./index.html --watch-path=./layout.js server.js",
     "test": "node --test \"test/*.test.js\"",
     "test:e2e": "playwright test"
   },

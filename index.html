@@ -69,6 +69,7 @@ body {
 .langsw button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
 h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 4vw, 34px); letter-spacing: -.01em; margin: 0 0 4px; text-wrap: balance; }
 .top p { margin: 0; color: var(--muted); max-width: 60ch; }
+.top p[data-i18n="subtitle"] { max-width: none; }
 .made { margin-top: 8px !important; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
 .made::before { content: "✉"; color: var(--blue); }
 .made strong { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
@@ -135,7 +136,7 @@ input[type="color"] { width: 34px; height: 30px; padding: 0; border: 1px solid v
     <button type="button" data-lang="en" aria-pressed="false">EN</button>
   </div>
   <h1>Grüessli</h1>
-  <p data-i18n="subtitle">Kreiere eine Postkarte und sende ein Grüessli aus den Ferien oder eifach um eine Freude zu machen ...</p>
+  <p data-i18n="subtitle">Kreiere eine Postkarte und sende ein Grüessli aus den Ferien oder eifach um eine Freude zu machen!</p>
   <p class="made" id="madeCount" hidden><strong id="madeNum">0</strong> <span data-i18n="madeLabel">Postkarten erstellt</span></p>
 </header>
 
@@ -231,7 +232,7 @@ import { arrange, fallbackRects } from "./layout.js";
   /* ---------- i18n (German default, English optional) ---------- */
   var I18N = {
     de: {
-      subtitle: "Kreiere eine Postkarte und sende ein Grüessli aus den Ferien oder eifach um eine Freude zu machen ...",
+      subtitle: "Kreiere eine Postkarte und sende ein Grüessli aus den Ferien oder eifach um eine Freude zu machen!",
       madeLabel: "Postkarten erstellt",
       postcardPreview: "Postkarten-Vorschau",
       hint: "Hochformat-Fotos erhalten hohe Zellen, Querformat-Fotos breite. Ziehe ein Foto, um es in seiner Zelle zu verschieben, und scrolle darüber zum Zoomen. Um zwei Fotos zu tauschen, ziehe den gepunkteten Griff in der Ecke eines Fotos auf ein anderes. Lege Bilddateien irgendwo auf der Seite ab, um sie hinzuzufügen.",
@@ -270,7 +271,6 @@ import { arrange, fallbackRects } from "./layout.js";
       couldNotRead: function (v) { return v.n + (v.n === 1 ? " konnte" : " konnten") + " nicht gelesen werden"; },
       swapped: function (v) { return "Foto " + v.a + " und Foto " + v.b + " getauscht."; },
       undid: "Letzte Änderung rückgängig gemacht.",
-      examples: " (Beispiele)",
       selectPhoto: function (v) { return "Foto " + v.n + " auswählen"; },
       movePhotoEarlier: function (v) { return "Foto " + v.n + " nach vorne verschieben"; },
       removePhoto: function (v) { return "Foto " + v.n + " entfernen"; },
@@ -289,7 +289,7 @@ import { arrange, fallbackRects } from "./layout.js";
       customBg: "Eigene Hintergrundfarbe"
     },
     en: {
-      subtitle: "Create a postcard and send a Grüessli from your holidays — or simply to bring someone joy ...",
+      subtitle: "Create a postcard and send a 'Grüessli' from your holidays — or simply to bring someone joy!",
       madeLabel: "postcards created",
       postcardPreview: "Postcard preview",
       hint: "Portrait photos get tall cells and landscape photos get wide ones. Drag a photo to reposition it inside its cell and scroll over it to zoom. To swap two photos, drag the dotted handle in a photo's corner onto another photo. Drop image files anywhere on the page to add them.",
@@ -328,7 +328,6 @@ import { arrange, fallbackRects } from "./layout.js";
       couldNotRead: function (v) { return v.n + " could not be read"; },
       swapped: function (v) { return "Swapped photo " + v.a + " and photo " + v.b + "."; },
       undid: "Undid the last change.",
-      examples: " (examples)",
       selectPhoto: function (v) { return "Select photo " + v.n; },
       movePhotoEarlier: function (v) { return "Move photo " + v.n + " earlier"; },
       removePhoto: function (v) { return "Remove photo " + v.n; },
@@ -672,7 +671,7 @@ import { arrange, fallbackRects } from "./layout.js";
       li.appendChild(pic); li.appendChild(tools); ul.appendChild(li);
     });
     var hasSample = state.photos.some(function (p) { return p.sample; });
-    $("count").textContent = n + " / " + MAX + (hasSample ? t("examples") : "");
+    $("count").textContent = n + " / " + MAX;
     $("addBtn").disabled = n >= MAX && !hasSample;
     $("save").disabled = n === 0;
     $("clearBtn").disabled = n === 0;

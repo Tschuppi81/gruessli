@@ -10,12 +10,22 @@ no dependencies.
 The page itself is a single static file — open `index.html` directly for a quick
 look (the "postcards created" badge just stays hidden without the server).
 
-To run the full app including the counter, use the bundled Node server (needs
-Node 22+, no dependencies to install):
+To run the full app including the counter you need the bundled Node server
+(Node 22+, no dependencies to install). For development, use the watch script —
+it auto-restarts on changes to `server.js`, `index.html` or `layout.js`:
 
 ```sh
-PORT=8080 DATA_DIR=./data node server.js   # then visit http://localhost:8080
+npm run dev      # watch mode, serves http://localhost:8787 (data in ./.devdata)
 ```
+
+Or run it once without watching:
+
+```sh
+npm start        # serves http://localhost:80 (set PORT / DATA_DIR to override)
+```
+
+Run the tests with `npm test` (unit/integration) and `npm run test:e2e`
+(Playwright browser test — see `e2e/`).
 
 ## Features
 

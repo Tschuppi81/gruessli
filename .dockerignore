@@ -6,6 +6,7 @@ node_modules
 test
 e2e
 .e2e-data
+.devdata
 test-results
 playwright-report
 playwright.config.ts
