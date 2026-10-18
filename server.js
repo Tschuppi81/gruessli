@@ -52,8 +52,13 @@ setInterval(() => {
   for (const [ip, e] of hits) if (now >= e.resetAt) hits.delete(ip)
 }, RATE_WINDOW_MS).unref()
 
+// App version, read from package.json so it stays single-source.
+const VERSION = JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8')).version
+
 // Serve the static assets from memory — they never change at runtime.
-const INDEX_HTML = readFileSync(join(__dirname, 'index.html'))
+// The index's __APP_VERSION__ placeholder is filled in once at startup.
+const INDEX_HTML = readFileSync(join(__dirname, 'index.html'), 'utf8')
+  .replaceAll('__APP_VERSION__', VERSION)
 const LAYOUT_JS = readFileSync(join(__dirname, 'layout.js'))
 
 // In-memory counter, loaded once at startup and persisted on every increment.
