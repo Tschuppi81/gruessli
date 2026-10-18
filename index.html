@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -62,7 +62,11 @@ body {
   margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))) calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
   background: repeating-linear-gradient(135deg, var(--red) 0 14px, var(--stripe-gap) 14px 24px, var(--blue) 24px 38px, var(--stripe-gap) 38px 48px);
 }
-.top { max-width: 1240px; margin: 0 auto; padding: 22px 0 18px; }
+.top { max-width: 1240px; margin: 0 auto; padding: 22px 0 18px; position: relative; }
+.langsw { position: fixed; top: 16px; right: max(12px, env(safe-area-inset-right, 0px)); z-index: 30; display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; box-shadow: var(--shadow); }
+.langsw button { border: 0; background: var(--field); color: var(--muted); padding: 5px 11px; font-size: 13px; font-weight: 600; }
+.langsw button + button { border-left: 1px solid var(--line); }
+.langsw button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
 h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 4vw, 34px); letter-spacing: -.01em; margin: 0 0 4px; text-wrap: balance; }
 .top p { margin: 0; color: var(--muted); max-width: 60ch; }
 .made { margin-top: 8px !important; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
@@ -114,7 +118,7 @@ button { font: inherit; cursor: pointer; }
 .sw { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); padding: 0; }
 .sw[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
 input[type="color"] { width: 34px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--field); cursor: pointer; }
-.dropping .stage::after { content: "Drop photos to add them"; position: fixed; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 82%, transparent); font-family: var(--font-display); font-size: 28px; font-weight: 700; pointer-events: none; z-index: 20; }
+.dropping .stage::after { content: var(--drop-label, "Drop photos to add them"); position: fixed; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 82%, transparent); font-family: var(--font-display); font-size: 28px; font-weight: 700; pointer-events: none; z-index: 20; }
 @media (max-width: 880px) {
   .app { grid-template-columns: minmax(0, 1fr); }
 }
@@ -126,90 +130,94 @@ input[type="color"] { width: 34px; height: 30px; padding: 0; border: 1px solid v
 <body>
 <div class="stripe" aria-hidden="true"></div>
 <header class="top">
+  <div class="langsw" id="langsw" role="group" aria-label="Sprache / Language">
+    <button type="button" data-lang="de" aria-pressed="true">DE</button>
+    <button type="button" data-lang="en" aria-pressed="false">EN</button>
+  </div>
   <h1>Grüessli</h1>
-  <p>Place 1 to 20 photos in a grid and save the finished card as an image.</p>
-  <p class="made" id="madeCount" hidden><strong id="madeNum">0</strong> postcards created</p>
+  <p data-i18n="subtitle">Kreiere eine Postkarte und sende ein Grüessli aus den Ferien oder eifach um eine Freude zu machen ...</p>
+  <p class="made" id="madeCount" hidden><strong id="madeNum">0</strong> <span data-i18n="madeLabel">Postkarten erstellt</span></p>
 </header>
 
 <main class="app">
-  <section class="stage" aria-label="Postcard preview">
-    <div class="card-wrap" id="cardWrap"><canvas id="cv" aria-label="Postcard preview"></canvas></div>
-    <p class="hint">Portrait photos get tall cells and landscape photos get wide ones. Drag a photo to reposition it inside its cell and scroll over it to zoom. To swap two photos, drag the dotted handle in a photo's corner onto another photo. Drop image files anywhere on the page to add them.</p>
+  <section class="stage" aria-label="Postkarten-Vorschau" data-i18n-aria="postcardPreview">
+    <div class="card-wrap" id="cardWrap"><canvas id="cv" aria-label="Postkarten-Vorschau" data-i18n-aria="postcardPreview"></canvas></div>
+    <p class="hint" data-i18n="hint">Hochformat-Fotos erhalten hohe Zellen, Querformat-Fotos breite. Ziehe ein Foto, um es in seiner Zelle zu verschieben, und scrolle darüber zum Zoomen. Um zwei Fotos zu tauschen, ziehe den gepunkteten Griff in der Ecke eines Fotos auf ein anderes. Lege Bilddateien irgendwo auf der Seite ab, um sie hinzuzufügen.</p>
   </section>
 
   <aside class="panel">
     <section class="group" aria-labelledby="hPhotos">
-      <h2 id="hPhotos">Photos <span class="count" id="count"></span></h2>
+      <h2 id="hPhotos"><span data-i18n="photos">Fotos</span> <span class="count" id="count"></span></h2>
       <div class="btnrow">
-        <button class="btn" id="addBtn" type="button">Add photos</button>
-        <button class="btn" id="undoBtn" type="button" disabled aria-label="Undo last change">Undo</button>
-        <button class="btn" id="shuffleBtn" type="button" disabled>Next arrangement</button>
-        <button class="btn" id="clearBtn" type="button">Clear all</button>
+        <button class="btn" id="addBtn" type="button" data-i18n="addPhotos">Fotos hinzufügen</button>
+        <button class="btn" id="undoBtn" type="button" disabled aria-label="Letzte Änderung rückgängig machen" data-i18n-aria="undoAria">Rückgängig</button>
+        <button class="btn" id="shuffleBtn" type="button" disabled>Nächste Anordnung</button>
+        <button class="btn" id="clearBtn" type="button" data-i18n="clearAll">Alle löschen</button>
       </div>
       <input id="file" type="file" accept="image/*" multiple hidden>
       <p class="notice" id="notice" role="status" aria-live="polite"></p>
       <ul class="thumbs" id="thumbs"></ul>
       <label class="row" for="zoom">
-        <span class="line"><span>Zoom selected photo</span><span class="val" id="zoomVal">100%</span></span>
+        <span class="line"><span data-i18n="zoomLabel">Ausgewähltes Foto zoomen</span><span class="val" id="zoomVal">100%</span></span>
         <input id="zoom" type="range" min="1" max="4" step="0.05" value="1" disabled>
       </label>
     </section>
 
     <section class="group" aria-labelledby="hLayout">
-      <h2 id="hLayout">Layout</h2>
-      <label class="row" for="format"><span>A6 orientation</span>
+      <h2 id="hLayout" data-i18n="layout">Layout</h2>
+      <label class="row" for="format"><span data-i18n="orientation">A6-Ausrichtung</span>
         <select id="format">
-          <option value="auto" selected>Auto, matches your photos</option>
-          <option value="land">Landscape, 148 × 105 mm</option>
-          <option value="port">Portrait, 105 × 148 mm</option>
+          <option value="auto" selected data-i18n="fmtAuto">Automatisch, passend zu deinen Fotos</option>
+          <option value="land" data-i18n="fmtLand">Querformat, 148 × 105 mm</option>
+          <option value="port" data-i18n="fmtPort">Hochformat, 105 × 148 mm</option>
         </select>
       </label>
-      <label class="row" for="arrange"><span>Arrange in</span>
+      <label class="row" for="arrange"><span data-i18n="arrangeIn">Anordnen in</span>
         <select id="arrange">
-          <option value="auto" selected>Auto, follows photo shapes</option>
-          <option value="rows">Rows</option>
-          <option value="cols">Columns</option>
+          <option value="auto" selected data-i18n="arrAuto">Automatisch, nach Fotoformen</option>
+          <option value="rows" data-i18n="arrRows">Reihen</option>
+          <option value="cols" data-i18n="arrCols">Spalten</option>
         </select>
       </label>
-      <label class="row" for="count"><span>Number of rows or columns</span>
+      <label class="row" for="count"><span data-i18n="rowsCols">Anzahl Reihen oder Spalten</span>
         <select id="count" disabled>
-          <option value="0">Auto</option>
+          <option value="0" data-i18n="auto">Automatisch</option>
           <option value="1">1</option><option value="2">2</option><option value="3">3</option>
           <option value="4">4</option><option value="5">5</option><option value="6">6</option>
           <option value="7">7</option>
         </select>
       </label>
-      <label class="row" for="gap"><span class="line"><span>Space between photos</span><span class="val" id="gapVal"></span></span>
+      <label class="row" for="gap"><span class="line"><span data-i18n="spacing">Abstand zwischen Fotos</span><span class="val" id="gapVal"></span></span>
         <input id="gap" type="range" min="0" max="4" step="0.1" value="1.2">
       </label>
-      <label class="row" for="margin"><span class="line"><span>Border</span><span class="val" id="marginVal"></span></span>
+      <label class="row" for="margin"><span class="line"><span data-i18n="borderWidth">Rand</span><span class="val" id="marginVal"></span></span>
         <input id="margin" type="range" min="0" max="8" step="0.1" value="3">
       </label>
-      <label class="row" for="radius"><span class="line"><span>Rounded corners</span><span class="val" id="radiusVal"></span></span>
+      <label class="row" for="radius"><span class="line"><span data-i18n="rounded">Abgerundete Ecken</span><span class="val" id="radiusVal"></span></span>
         <input id="radius" type="range" min="0" max="6" step="0.1" value="0.8">
       </label>
     </section>
 
     <section class="group" aria-labelledby="hLook">
-      <h2 id="hLook">Look</h2>
+      <h2 id="hLook" data-i18n="look">Gestaltung</h2>
       <div>
-        <div style="font-weight:500;margin-bottom:8px">Background</div>
+        <div style="font-weight:500;margin-bottom:8px" data-i18n="background">Hintergrund</div>
         <div class="swatches" id="swatches"></div>
       </div>
-      <label class="row" for="caption"><span>Caption (optional)</span>
-        <input id="caption" type="text" maxlength="60" placeholder="Greetings from Lake Lucerne">
+      <label class="row" for="caption"><span data-i18n="captionLabel">Beschriftung (optional)</span>
+        <input id="caption" type="text" maxlength="60" placeholder="Grüsse vom Vierwaldstättersee" data-i18n-ph="captionPh">
       </label>
-      <label class="row" for="font"><span>Caption style</span>
+      <label class="row" for="font"><span data-i18n="captionStyle">Schriftstil</span>
         <select id="font">
-          <option value="serif">Serif italic</option>
-          <option value="sans">Bold sans</option>
-          <option value="script">Handwriting</option>
+          <option value="serif" data-i18n="fontSerif">Serif kursiv</option>
+          <option value="sans" data-i18n="fontSans">Fett serifenlos</option>
+          <option value="script" data-i18n="fontScript">Handschrift</option>
         </select>
       </label>
     </section>
 
     <section class="group">
-      <button class="btn primary" id="save" type="button">Save as PNG</button>
+      <button class="btn primary" id="save" type="button" data-i18n="saveBtn">Als PNG speichern</button>
       <p class="notice" id="saveInfo"></p>
     </section>
   </aside>
@@ -219,6 +227,133 @@ input[type="color"] { width: 34px; height: 30px; padding: 0; border: 1px solid v
 import { arrange, fallbackRects } from "./layout.js";
 (function () {
   "use strict";
+
+  /* ---------- i18n (German default, English optional) ---------- */
+  var I18N = {
+    de: {
+      subtitle: "Kreiere eine Postkarte und sende ein Grüessli aus den Ferien oder eifach um eine Freude zu machen ...",
+      madeLabel: "Postkarten erstellt",
+      postcardPreview: "Postkarten-Vorschau",
+      hint: "Hochformat-Fotos erhalten hohe Zellen, Querformat-Fotos breite. Ziehe ein Foto, um es in seiner Zelle zu verschieben, und scrolle darüber zum Zoomen. Um zwei Fotos zu tauschen, ziehe den gepunkteten Griff in der Ecke eines Fotos auf ein anderes. Lege Bilddateien irgendwo auf der Seite ab, um sie hinzuzufügen.",
+      photos: "Fotos",
+      addPhotos: "Fotos hinzufügen",
+      clearAll: "Alle löschen",
+      undoAria: "Letzte Änderung rückgängig machen",
+      zoomLabel: "Ausgewähltes Foto zoomen",
+      layout: "Layout",
+      orientation: "A6-Ausrichtung",
+      fmtAuto: "Automatisch, passend zu deinen Fotos",
+      fmtLand: "Querformat, 148 × 105 mm",
+      fmtPort: "Hochformat, 105 × 148 mm",
+      arrangeIn: "Anordnen in",
+      arrAuto: "Automatisch, nach Fotoformen",
+      arrRows: "Reihen",
+      arrCols: "Spalten",
+      rowsCols: "Anzahl Reihen oder Spalten",
+      auto: "Automatisch",
+      spacing: "Abstand zwischen Fotos",
+      borderWidth: "Rand",
+      rounded: "Abgerundete Ecken",
+      look: "Gestaltung",
+      background: "Hintergrund",
+      captionLabel: "Beschriftung (optional)",
+      captionPh: "Grüsse vom Vierwaldstättersee",
+      captionStyle: "Schriftstil",
+      fontSerif: "Serif kursiv",
+      fontSans: "Fett serifenlos",
+      fontScript: "Handschrift",
+      saveBtn: "Als PNG speichern",
+      dropLabel: "Fotos hier ablegen zum Hinzufügen",
+      notImages: "Diese Dateien sind keine Bilder.",
+      loading: function (v) { return "Lade " + v.n + (v.n === 1 ? " Foto…" : " Fotos…"); },
+      notAdded: function (v) { return v.n + " nicht hinzugefügt (Limit ist " + v.max + ")"; },
+      couldNotRead: function (v) { return v.n + (v.n === 1 ? " konnte" : " konnten") + " nicht gelesen werden"; },
+      swapped: function (v) { return "Foto " + v.a + " und Foto " + v.b + " getauscht."; },
+      undid: "Letzte Änderung rückgängig gemacht.",
+      examples: " (Beispiele)",
+      selectPhoto: function (v) { return "Foto " + v.n + " auswählen"; },
+      movePhotoEarlier: function (v) { return "Foto " + v.n + " nach vorne verschieben"; },
+      removePhoto: function (v) { return "Foto " + v.n + " entfernen"; },
+      movePhotoLater: function (v) { return "Foto " + v.n + " nach hinten verschieben"; },
+      undo: "Rückgängig",
+      undoN: function (v) { return "Rückgängig (" + v.n + ")"; },
+      nextArr: "Nächste Anordnung",
+      nextArrN: function (v) { return "Nächste Anordnung (" + v.i + " von " + v.n + ")"; },
+      emptyCanvas: "Füge Fotos hinzu, um deine Postkarte zu beginnen",
+      saveFail: "Bild konnte nicht erstellt werden. Versuche eine kleinere Kartengrösse.",
+      saved: function (v) { return "postcard.png gespeichert (" + v.w + " × " + v.h + " px, 300 dpi in Druckgrösse)."; },
+      rangeNone: "Kein",
+      rangeSquare: "Eckig",
+      swWhite: "Weiss", swSand: "Sand", swBlack: "Schwarz", swNavy: "Marineblau", swSage: "Salbeigrün", swRose: "Rosé",
+      bgOf: function (v) { return "Hintergrund " + v.name; },
+      customBg: "Eigene Hintergrundfarbe"
+    },
+    en: {
+      subtitle: "Create a postcard and send a Grüessli from your holidays — or simply to bring someone joy ...",
+      madeLabel: "postcards created",
+      postcardPreview: "Postcard preview",
+      hint: "Portrait photos get tall cells and landscape photos get wide ones. Drag a photo to reposition it inside its cell and scroll over it to zoom. To swap two photos, drag the dotted handle in a photo's corner onto another photo. Drop image files anywhere on the page to add them.",
+      photos: "Photos",
+      addPhotos: "Add photos",
+      clearAll: "Clear all",
+      undoAria: "Undo last change",
+      zoomLabel: "Zoom selected photo",
+      layout: "Layout",
+      orientation: "A6 orientation",
+      fmtAuto: "Auto, matches your photos",
+      fmtLand: "Landscape, 148 × 105 mm",
+      fmtPort: "Portrait, 105 × 148 mm",
+      arrangeIn: "Arrange in",
+      arrAuto: "Auto, follows photo shapes",
+      arrRows: "Rows",
+      arrCols: "Columns",
+      rowsCols: "Number of rows or columns",
+      auto: "Auto",
+      spacing: "Space between photos",
+      borderWidth: "Border",
+      rounded: "Rounded corners",
+      look: "Look",
+      background: "Background",
+      captionLabel: "Caption (optional)",
+      captionPh: "Greetings from Lake Lucerne",
+      captionStyle: "Caption style",
+      fontSerif: "Serif italic",
+      fontSans: "Bold sans",
+      fontScript: "Handwriting",
+      saveBtn: "Save as PNG",
+      dropLabel: "Drop photos to add them",
+      notImages: "Those files are not images.",
+      loading: function (v) { return "Loading " + v.n + (v.n === 1 ? " photo…" : " photos…"); },
+      notAdded: function (v) { return v.n + " not added (limit is " + v.max + ")"; },
+      couldNotRead: function (v) { return v.n + " could not be read"; },
+      swapped: function (v) { return "Swapped photo " + v.a + " and photo " + v.b + "."; },
+      undid: "Undid the last change.",
+      examples: " (examples)",
+      selectPhoto: function (v) { return "Select photo " + v.n; },
+      movePhotoEarlier: function (v) { return "Move photo " + v.n + " earlier"; },
+      removePhoto: function (v) { return "Remove photo " + v.n; },
+      movePhotoLater: function (v) { return "Move photo " + v.n + " later"; },
+      undo: "Undo",
+      undoN: function (v) { return "Undo (" + v.n + ")"; },
+      nextArr: "Next arrangement",
+      nextArrN: function (v) { return "Next arrangement (" + v.i + " of " + v.n + ")"; },
+      emptyCanvas: "Add photos to start your postcard",
+      saveFail: "Could not create the image. Try a smaller card size.",
+      saved: function (v) { return "Saved postcard.png (" + v.w + " × " + v.h + " px, 300 dpi at print size)."; },
+      rangeNone: "None",
+      rangeSquare: "Square",
+      swWhite: "White", swSand: "Sand", swBlack: "Black", swNavy: "Navy", swSage: "Sage", swRose: "Rose",
+      bgOf: function (v) { return "Background " + v.name; },
+      customBg: "Custom background color"
+    }
+  };
+  var lang = "de";
+  try { var saved = localStorage.getItem("gruessli-lang"); if (saved === "de" || saved === "en") lang = saved; } catch (e) {}
+  function t(key, vars) {
+    var v = (I18N[lang] && I18N[lang][key]);
+    if (v == null) v = I18N.de[key];
+    return typeof v === "function" ? v(vars || {}) : v;
+  }
 
   var MAX = 20;
   var FORMATS = {
@@ -231,8 +366,8 @@ import { arrange, fallbackRects } from "./layout.js";
     script: { css: '400 {s}px "Segoe Script", "Bradley Hand", "Snell Roundhand", "Brush Script MT", cursive' }
   };
   var SWATCHES = [
-    ["#ffffff", "White"], ["#f3ead8", "Sand"], ["#111418", "Black"],
-    ["#1d3557", "Navy"], ["#a8c3a0", "Sage"], ["#f2b8b0", "Rose"]
+    ["#ffffff", "swWhite"], ["#f3ead8", "swSand"], ["#111418", "swBlack"],
+    ["#1d3557", "swNavy"], ["#a8c3a0", "swSage"], ["#f2b8b0", "swRose"]
   ];
 
   var state = {
@@ -422,7 +557,7 @@ import { arrange, fallbackRects } from "./layout.js";
       g.fillStyle = lum(state.bg) > 0.5 ? "#566274" : "#9aa5b5";
       g.textAlign = "center"; g.textBaseline = "middle";
       g.font = "500 " + Math.round(W * 0.03) + "px system-ui, sans-serif";
-      g.fillText("Add photos to start your postcard", W / 2, H / 2);
+      g.fillText(t("emptyCanvas"), W / 2, H / 2);
       return rects;
     }
 
@@ -470,7 +605,7 @@ import { arrange, fallbackRects } from "./layout.js";
   }
   function updateShuffle() {
     var n = variantsFor(cv.width, cv.height).length, b = $("shuffleBtn");
-    var txt = n < 2 ? "Next arrangement" : "Next arrangement (" + (state.variant % n + 1) + " of " + n + ")";
+    var txt = n < 2 ? t("nextArr") : t("nextArrN", { i: state.variant % n + 1, n: n });
     b.disabled = n < 2;
     if (b.textContent !== txt) b.textContent = txt;
   }
@@ -520,24 +655,24 @@ import { arrange, fallbackRects } from "./layout.js";
         if (thumbDrag < 0) return;
         ev.preventDefault();
         var from = thumbDrag; thumbDrag = -1;
-        if (from !== i) { swapPhotos(from, i); notice("Swapped photo " + (from + 1) + " and photo " + (i + 1) + "."); }
+        if (from !== i) { swapPhotos(from, i); notice(t("swapped", { a: from + 1, b: i + 1 })); }
         else li.classList.remove("over");
       });
       var pic = document.createElement("button");
       pic.type = "button"; pic.className = "pic";
-      pic.setAttribute("aria-label", "Select photo " + (i + 1));
+      pic.setAttribute("aria-label", t("selectPhoto", { n: i + 1 }));
       pic.setAttribute("aria-pressed", p.id === state.sel ? "true" : "false");
       var img = document.createElement("img"); img.src = p.thumb; img.alt = ""; img.draggable = false;
       pic.appendChild(img);
       pic.addEventListener("click", function () { select(p.id); });
       var tools = document.createElement("div"); tools.className = "tools";
-      tools.appendChild(toolBtn("‹", "Move photo " + (i + 1) + " earlier", i === 0, function () { move(i, -1); }));
-      tools.appendChild(toolBtn("×", "Remove photo " + (i + 1), false, function () { removeAt(i); }));
-      tools.appendChild(toolBtn("›", "Move photo " + (i + 1) + " later", i === n - 1, function () { move(i, 1); }));
+      tools.appendChild(toolBtn("‹", t("movePhotoEarlier", { n: i + 1 }), i === 0, function () { move(i, -1); }));
+      tools.appendChild(toolBtn("×", t("removePhoto", { n: i + 1 }), false, function () { removeAt(i); }));
+      tools.appendChild(toolBtn("›", t("movePhotoLater", { n: i + 1 }), i === n - 1, function () { move(i, 1); }));
       li.appendChild(pic); li.appendChild(tools); ul.appendChild(li);
     });
     var hasSample = state.photos.some(function (p) { return p.sample; });
-    $("count").textContent = n + " / " + MAX + (hasSample ? " (examples)" : "");
+    $("count").textContent = n + " / " + MAX + (hasSample ? t("examples") : "");
     $("addBtn").disabled = n >= MAX && !hasSample;
     $("save").disabled = n === 0;
     $("clearBtn").disabled = n === 0;
@@ -558,7 +693,7 @@ import { arrange, fallbackRects } from "./layout.js";
   function updateUndo() {
     var b = $("undoBtn"), n = undoStack.length;
     b.disabled = n === 0;
-    b.textContent = n ? "Undo (" + n + ")" : "Undo";
+    b.textContent = n ? t("undoN", { n: n }) : t("undo");
   }
   function pushUndo() {
     undoStack.push({ photos: state.photos.slice(), sel: state.sel, variant: state.variant, aspects: state.layoutAspects });
@@ -576,7 +711,7 @@ import { arrange, fallbackRects } from "./layout.js";
     state.sel = e.photos.some(function (p) { return p.id === e.sel; })
       ? e.sel : (e.photos.length ? e.photos[0].id : null);
     release(gone);
-    notice("Undid the last change.");
+    notice(t("undid"));
     renderThumbs(); syncZoom(); render(); updateUndo();
   }
   /* Swap two photos. The grid keeps its shape: each photo simply takes the other's cell. */
@@ -637,18 +772,18 @@ import { arrange, fallbackRects } from "./layout.js";
   }
   async function addFiles(fileList) {
     var files = Array.prototype.slice.call(fileList).filter(function (f) { return /^image\//.test(f.type); });
-    if (!files.length) { notice("Those files are not images."); return; }
+    if (!files.length) { notice(t("notImages")); return; }
     pushUndo();
     if (state.photos.some(function (p) { return p.sample; })) { state.photos = []; state.sel = null; }
     var room = MAX - state.photos.length;
     var take = files.slice(0, room), skipped = files.length - take.length, failed = 0;
-    notice("Loading " + take.length + (take.length === 1 ? " photo…" : " photos…"));
+    notice(t("loading", { n: take.length }));
     for (var i = 0; i < take.length; i++) {
       try { state.photos.push(await loadPhoto(take[i])); } catch (e) { failed++; }
     }
     var parts = [];
-    if (skipped) parts.push(skipped + " not added (limit is " + MAX + ")");
-    if (failed) parts.push(failed + " could not be read");
+    if (skipped) parts.push(t("notAdded", { n: skipped, max: MAX }));
+    if (failed) parts.push(t("couldNotRead", { n: failed }));
     var snap = undoStack[undoStack.length - 1];
     if (snap && sameList(snap.photos, state.photos)) {
       undoStack.pop(); state.variant = snap.variant; state.layoutAspects = snap.aspects; updateUndo();
@@ -705,7 +840,7 @@ import { arrange, fallbackRects } from "./layout.js";
       swapDrag = null;
       if (e && e.type === "pointerup" && s.over >= 0 && s.over !== s.from) {
         swapPhotos(s.from, s.over);
-        notice("Swapped photo " + (s.from + 1) + " and photo " + (s.over + 1) + ".");
+        notice(t("swapped", { a: s.from + 1, b: s.over + 1 }));
       } else render();
     }
     drag = null; cv.classList.remove("grabbing");
@@ -757,15 +892,18 @@ import { arrange, fallbackRects } from "./layout.js";
     render();
   });
   $("count").addEventListener("change", function (e) { state.count = parseInt(e.target.value, 10); state.variant = 0; render(); });
+  var rangeRefreshers = [];
   function bindRange(id, key, valId, fmt) {
     var el = $(id);
-    function upd() { state[key] = parseFloat(el.value); $(valId).textContent = fmt(state[key]); render(); }
+    function refresh() { $(valId).textContent = fmt(parseFloat(el.value)); }
+    function upd() { state[key] = parseFloat(el.value); refresh(); render(); }
     el.addEventListener("input", upd);
-    $(valId).textContent = fmt(parseFloat(el.value));
+    rangeRefreshers.push(refresh);
+    refresh();
   }
-  bindRange("gap", "gap", "gapVal", function (v) { return v === 0 ? "None" : v.toFixed(1); });
-  bindRange("margin", "margin", "marginVal", function (v) { return v === 0 ? "None" : v.toFixed(1); });
-  bindRange("radius", "radius", "radiusVal", function (v) { return v === 0 ? "Square" : v.toFixed(1); });
+  bindRange("gap", "gap", "gapVal", function (v) { return v === 0 ? t("rangeNone") : v.toFixed(1); });
+  bindRange("margin", "margin", "marginVal", function (v) { return v === 0 ? t("rangeNone") : v.toFixed(1); });
+  bindRange("radius", "radius", "radiusVal", function (v) { return v === 0 ? t("rangeSquare") : v.toFixed(1); });
   $("caption").addEventListener("input", function (e) { state.caption = e.target.value; render(); });
   $("font").addEventListener("change", function (e) { state.font = e.target.value; render(); });
 
@@ -779,13 +917,13 @@ import { arrange, fallbackRects } from "./layout.js";
   }
   SWATCHES.forEach(function (s) {
     var b = document.createElement("button");
-    b.type = "button"; b.className = "sw"; b.style.background = s[0]; b.dataset.hex = s[0];
-    b.setAttribute("aria-label", "Background " + s[1]); b.title = s[1];
+    b.type = "button"; b.className = "sw"; b.style.background = s[0]; b.dataset.hex = s[0]; b.dataset.nameKey = s[1];
+    b.setAttribute("aria-label", t("bgOf", { name: t(s[1]) })); b.title = t(s[1]);
     b.addEventListener("click", function () { setBg(s[0]); });
     swWrap.appendChild(b);
   });
   colorIn.type = "color"; colorIn.value = state.bg; colorIn.id = "bgColor";
-  colorIn.setAttribute("aria-label", "Custom background color");
+  colorIn.setAttribute("aria-label", t("customBg"));
   colorIn.addEventListener("input", function () { setBg(colorIn.value); });
   swWrap.appendChild(colorIn);
 
@@ -795,12 +933,12 @@ import { arrange, fallbackRects } from "./layout.js";
     var c = mkCanvas(f.w, f.h);
     draw(c.getContext("2d"), f.w, f.h, false);
     c.toBlob(function (blob) {
-      if (!blob) { $("saveInfo").textContent = "Could not create the image. Try a smaller card size."; return; }
+      if (!blob) { $("saveInfo").textContent = t("saveFail"); return; }
       var a = document.createElement("a");
       a.href = URL.createObjectURL(blob); a.download = "postcard.png";
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
-      $("saveInfo").textContent = "Saved postcard.png (" + f.w + " × " + f.h + " px, 300 dpi at print size).";
+      $("saveInfo").textContent = t("saved", { w: f.w, h: f.h });
       bumpCount();
     }, "image/png");
   });
@@ -835,9 +973,40 @@ import { arrange, fallbackRects } from "./layout.js";
     addFiles(e.dataTransfer.files);
   });
 
+  /* ---------- apply language ---------- */
+  function applyI18n() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(function (el) { el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll("[data-i18n-ph]").forEach(function (el) { el.placeholder = t(el.dataset.i18nPh); });
+    document.querySelectorAll("[data-i18n-aria]").forEach(function (el) { el.setAttribute("aria-label", t(el.dataset.i18nAria)); });
+    document.documentElement.style.setProperty("--drop-label", JSON.stringify(t("dropLabel")));
+    // Swatch labels + custom-colour input
+    swWrap.querySelectorAll(".sw").forEach(function (b) {
+      b.setAttribute("aria-label", t("bgOf", { name: t(b.dataset.nameKey) })); b.title = t(b.dataset.nameKey);
+    });
+    colorIn.setAttribute("aria-label", t("customBg"));
+    // Re-render the strings the JS builds itself
+    rangeRefreshers.forEach(function (fn) { fn(); });
+    renderThumbs(); updateShuffle(); updateUndo(); syncZoom(); render();
+    document.querySelectorAll("#langsw button").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.dataset.lang === lang ? "true" : "false");
+    });
+  }
+  function setLang(next) {
+    if (next !== "de" && next !== "en") return;
+    lang = next;
+    try { localStorage.setItem("gruessli-lang", lang); } catch (e) {}
+    notice(""); $("saveInfo").textContent = "";
+    applyI18n();
+  }
+  document.querySelectorAll("#langsw button").forEach(function (b) {
+    b.addEventListener("click", function () { setLang(b.dataset.lang); });
+  });
+
   /* ---------- start ---------- */
   for (var i = 0; i < 6; i++) state.photos.push(samplePhoto(i));
   state.sel = state.photos[0].id;
+  applyI18n();
   renderThumbs(); syncZoom(); fit();
   window.addEventListener("resize", fit);
   if (window.ResizeObserver) new ResizeObserver(function () {

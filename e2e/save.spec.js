@@ -11,9 +11,10 @@ test('saving a postcard downloads a PNG and increments the counter', async ({ pa
   const badge = page.locator('#madeNum')
   await expect(badge).toHaveText('0')
 
+  // Target by id so the test is language-agnostic (the label is localized).
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Save as PNG' }).click(),
+    page.locator('#save').click(),
   ])
 
   // It's offered as postcard.png and is a real PNG (magic-number check).
