@@ -38,6 +38,8 @@ label removed in 9f8a55f).
       named Docker volume, not Postgres, so it is outside the DB-backup flow.
 - [ ] Consider abuse protection beyond rate limiting if the counter matters
       (the increment endpoint is intentionally public).
+- [ ] More postcard caption fonts — currently just three (serif italic, bold
+      sans, handwriting); offer a wider selection in the caption font picker.
 
 ## Done
 - [x] Favicon — inline SVG postcard-with-photo-grid icon in `index.html`
@@ -46,5 +48,3 @@ label removed in 9f8a55f).
       circle, added a light-blue swatch, and reordered swatches bright → dark.
 - [x] Tooltips on the per-thumbnail controls — the ‹ / × / › buttons now carry
       a localized hover `title` (reusing their aria-label).
-- [x] Clearer German labels for the ‹ / › reorder buttons ("an die
-      vorherige/nächste Stelle schieben" instead of "nach vorne/hinten").
