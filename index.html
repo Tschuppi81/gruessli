@@ -250,6 +250,7 @@ import { arrange, fallbackRects } from "./layout.js";
   /* ---------- i18n (German default, English optional) ---------- */
   var I18N = {
     de: {
+      pageTitle: "Grüessli · Postkarten kostenlos gestalten",
       subtitle: "Kreiere eine Postkarte und sende ein Grüessli aus den Ferien oder eifach um eine Freude zu machen!",
       madeLabel: "Postkarten erstellt",
       postcardPreview: "Postkarten-Vorschau",
@@ -307,7 +308,8 @@ import { arrange, fallbackRects } from "./layout.js";
       customBg: "Eigene Hintergrundfarbe"
     },
     en: {
-      subtitle: "Create a postcard and send a 'Grüessli' from your holidays — or simply to bring someone joy!",
+      pageTitle: "Grüessli · Create postcards for free",
+      subtitle: "Create a postcard and send a 'Grüessli' — Swiss German for a little hello — from your holidays, or simply to bring someone joy!",
       madeLabel: "postcards created",
       postcardPreview: "Postcard preview",
       hint: "Portrait photos get tall cells and landscape photos get wide ones. Drag a photo to reposition it inside its cell and scroll over it to zoom. To swap two photos, drag the dotted handle in a photo's corner onto another photo. Drop image files anywhere on the page to add them.",
@@ -995,6 +997,7 @@ import { arrange, fallbackRects } from "./layout.js";
   /* ---------- apply language ---------- */
   function applyI18n() {
     document.documentElement.lang = lang;
+    document.title = t("pageTitle");
     document.querySelectorAll("[data-i18n]").forEach(function (el) { el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll("[data-i18n-ph]").forEach(function (el) { el.placeholder = t(el.dataset.i18nPh); });
     document.querySelectorAll("[data-i18n-aria]").forEach(function (el) { el.setAttribute("aria-label", t(el.dataset.i18nAria)); });
