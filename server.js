@@ -23,6 +23,12 @@ const RATE_MAX = Number(process.env.RATE_MAX || 10)
 const RATE_WINDOW_MS = Number(process.env.RATE_WINDOW_MS || 60_000)
 const hits = new Map() // ip -> { count, resetAt }
 
+// Log helpers: every line is prefixed with an ISO 8601 / UTC timestamp
+// (toISOString() is always UTC, with the trailing `Z`) so logs sort and
+// correlate regardless of the host's local timezone.
+const log = (...args) => console.log(new Date().toISOString(), ...args)
+const logError = (...args) => console.error(new Date().toISOString(), ...args)
+
 // Trust the proxy-supplied visitor IP (Caddy/cloudflared set Cf-Connecting-Ip;
 // X-Forwarded-For is the fallback), then the raw socket for local runs.
 function clientIp(req) {
@@ -83,7 +89,7 @@ function persist() {
     const tmp = COUNT_FILE + '.tmp'
     await writeFile(tmp, JSON.stringify({ count }))
     await rename(tmp, COUNT_FILE)
-  }).catch((err) => console.error('persist failed:', err))
+  }).catch((err) => logError('persist failed:', err))
   return writing
 }
 
@@ -135,7 +141,7 @@ const server = createServer(async (req, res) => {
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href
 if (isMain) {
   await loadCount()
-  server.listen(PORT, () => console.log(`Grüessli listening on :${PORT}`))
+  server.listen(PORT, () => log(`Grüessli listening on :${PORT}`))
 }
 
 export { server, rateLimited, clientIp, hits, RATE_MAX, RATE_WINDOW_MS, COUNT_FILE }
