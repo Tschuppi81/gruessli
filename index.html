@@ -240,6 +240,14 @@ label.inline[hidden] { display: none; }
         <input id="capColor" class="colorval" type="color" value="#1c2430">
       </label>
       <label class="check" for="capOutline"><input id="capOutline" type="checkbox"><span data-i18n="capOutline">Kontur (heller Rand)</span></label>
+      <label class="check" for="capBox"><input id="capBox" type="checkbox"><span data-i18n="capBox">Rahmen um den Text</span></label>
+      <label class="inline" for="capBoxColor" id="capBoxColorRow" hidden><span data-i18n="capBoxColorLabel">Rahmenfarbe</span>
+        <input id="capBoxColor" class="colorval" type="color" value="#1c2430">
+      </label>
+      <label class="check" for="capFill" id="capFillRow" hidden><input id="capFill" type="checkbox"><span data-i18n="capFill">Rahmen füllen</span></label>
+      <label class="inline" for="capFillColor" id="capFillColorRow" hidden><span data-i18n="capFillColorLabel">Füllfarbe</span>
+        <input id="capFillColor" class="colorval" type="color" value="#ffffff">
+      </label>
     </section>
 
     <section class="group">
@@ -305,6 +313,10 @@ import { arrange, fallbackRects } from "./layout.js";
       capAutoColor: "Textfarbe automatisch",
       capColorLabel: "Textfarbe",
       capOutline: "Kontur (heller Rand)",
+      capBox: "Rahmen um den Text",
+      capBoxColorLabel: "Rahmenfarbe",
+      capFill: "Rahmen füllen",
+      capFillColorLabel: "Füllfarbe",
       saveBtn: "Als PNG speichern",
       dropLabel: "Fotos hier ablegen zum Hinzufügen",
       notImages: "Diese Dateien sind keine Bilder.",
@@ -369,6 +381,10 @@ import { arrange, fallbackRects } from "./layout.js";
       capAutoColor: "Automatic text colour",
       capColorLabel: "Text colour",
       capOutline: "Outline (light edge)",
+      capBox: "Frame around the text",
+      capBoxColorLabel: "Frame colour",
+      capFill: "Fill the frame",
+      capFillColorLabel: "Fill colour",
       saveBtn: "Save as PNG",
       dropLabel: "Drop photos to add them",
       notImages: "Those files are not images.",
@@ -433,7 +449,8 @@ import { arrange, fallbackRects } from "./layout.js";
   var state = {
     photos: [], sel: null, format: "auto", arrange: "auto", lineCount: 0, variant: 0, layoutAspects: null,
     gap: 1.2, margin: 3, radius: 0.8, bg: "#ffffff",
-    caption: "", font: "caveat", capAuto: true, capColor: "#1c2430", capOutline: false
+    caption: "", font: "caveat", capAuto: true, capColor: "#1c2430", capOutline: false,
+    capBox: false, capBoxColor: "#1c2430", capFill: false, capFillColor: "#ffffff"
   };
   var nextId = 1;
   var lastRects = [];
@@ -638,6 +655,16 @@ import { arrange, fallbackRects } from "./layout.js";
       var maxW = geo.iw * 0.96, tw = g.measureText(t).width;
       if (tw > maxW) { size = size * maxW / tw; g.font = tpl.replace("{s}", size); }
       var cx = W / 2, cy = geo.y0 + geo.ih + geo.cap / 2 + size * 0.04;
+      if (state.capBox) {
+        var bw = g.measureText(t).width + size * 0.9, bh = size * 1.55;
+        var box = { x: cx - bw / 2, y: cy - bh / 2, w: bw, h: bh };
+        if (state.capFill) { g.fillStyle = state.capFillColor; pathRect(g, box, bh * 0.22); g.fill(); }
+        g.lineJoin = "round";
+        g.lineWidth = size * 0.07;
+        g.strokeStyle = state.capBoxColor;
+        pathRect(g, { x: box.x + g.lineWidth / 2, y: box.y + g.lineWidth / 2, w: box.w - g.lineWidth, h: box.h - g.lineWidth }, bh * 0.22);
+        g.stroke();
+      }
       if (state.capOutline) {
         g.lineJoin = "round";
         g.lineWidth = size * 0.14;
@@ -981,6 +1008,20 @@ import { arrange, fallbackRects } from "./layout.js";
   });
   $("capColor").addEventListener("input", function (e) { state.capColor = e.target.value; render(); });
   $("capOutline").addEventListener("change", function (e) { state.capOutline = e.target.checked; render(); });
+  $("capBox").addEventListener("change", function (e) {
+    state.capBox = e.target.checked;
+    $("capBoxColorRow").hidden = !e.target.checked;
+    $("capFillRow").hidden = !e.target.checked;
+    $("capFillColorRow").hidden = !e.target.checked || !state.capFill;
+    render();
+  });
+  $("capBoxColor").addEventListener("input", function (e) { state.capBoxColor = e.target.value; render(); });
+  $("capFill").addEventListener("change", function (e) {
+    state.capFill = e.target.checked;
+    $("capFillColorRow").hidden = !e.target.checked;
+    render();
+  });
+  $("capFillColor").addEventListener("input", function (e) { state.capFillColor = e.target.value; render(); });
 
   var swWrap = $("swatches"), colorIn = document.createElement("input");
   function setBg(hex) {

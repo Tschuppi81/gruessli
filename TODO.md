@@ -45,8 +45,10 @@ label removed in 9f8a55f).
 - [x] Copy/SEO: "free online postcard creator?". Foregrounded *kostenlos* and
       added *online* in the title and description.
 - [x] Caption text color and border. Added an "automatic colour" toggle that,
-      when off, reveals a text-colour picker; plus a "Kontur" outline checkbox
-      that strokes a contrasting edge around the caption glyphs.
+      when off, reveals a text-colour picker; a "Kontur" outline checkbox that
+      strokes a contrasting edge around the caption glyphs; and a "Rahmen"
+      box/frame around the caption with its own frame colour and an optional
+      fill colour.
 - [ ] Movable caption text field over the image, and rotatable.
 - [ ] Back up the `gruessli-data` volume (holds the postcard counter) — it is a
       named Docker volume, not Postgres, so it is outside the DB-backup flow.
