@@ -156,7 +156,7 @@ input[type="color"]::-moz-color-swatch { border: none; opacity: 0; }
 
   <aside class="panel">
     <section class="group" aria-labelledby="hPhotos">
-      <h2 id="hPhotos"><span data-i18n="photos">Fotos</span> <span class="count" id="count"></span></h2>
+      <h2 id="hPhotos"><span data-i18n="photos">Fotos</span> <span class="count" id="photoCount"></span></h2>
       <div class="btnrow">
         <button class="btn" id="addBtn" type="button" data-i18n="addPhotos">Fotos hinzufügen</button>
         <button class="btn" id="undoBtn" type="button" disabled aria-label="Letzte Änderung rückgängig machen" data-i18n-aria="undoAria">Rückgängig</button>
@@ -188,8 +188,8 @@ input[type="color"]::-moz-color-swatch { border: none; opacity: 0; }
           <option value="cols" data-i18n="arrCols">Spalten</option>
         </select>
       </label>
-      <label class="row" for="count"><span data-i18n="rowsCols">Anzahl Reihen oder Spalten</span>
-        <select id="count" disabled>
+      <label class="row" for="lineCount"><span data-i18n="rowsCols">Anzahl Reihen oder Spalten</span>
+        <select id="lineCount" disabled>
           <option value="0" data-i18n="auto">Automatisch</option>
           <option value="1">1</option><option value="2">2</option><option value="3">3</option>
           <option value="4">4</option><option value="5">5</option><option value="6">6</option>
@@ -392,7 +392,7 @@ import { arrange, fallbackRects } from "./layout.js";
   ];
 
   var state = {
-    photos: [], sel: null, format: "auto", arrange: "auto", count: 0, variant: 0, layoutAspects: null,
+    photos: [], sel: null, format: "auto", arrange: "auto", lineCount: 0, variant: 0, layoutAspects: null,
     gap: 1.2, margin: 3, radius: 0.8, bg: "#ffffff",
     caption: "", font: "serif"
   };
@@ -481,10 +481,10 @@ import { arrange, fallbackRects } from "./layout.js";
       state.layoutAspects = state.photos.map(function (p) { return p.iw / p.ih; });
     }
     var a = state.layoutAspects;
-    var key = [W, H, state.margin, state.gap, geo.cap, state.arrange, state.count,
+    var key = [W, H, state.margin, state.gap, geo.cap, state.arrange, state.lineCount,
       a.map(function (v) { return v.toFixed(4); }).join(",")].join("|");
     if (planCache[key]) return planCache[key];
-    var best = arrange(a, geo, state.arrange, state.count) ||
+    var best = arrange(a, geo, state.arrange, state.lineCount) ||
       { cost: 9, variants: [{ cost: 9, rects: fallbackRects(n, geo) }] };
     if (planCount++ > 40) { planCache = {}; planCount = 0; }
     planCache[key] = best;
@@ -693,7 +693,7 @@ import { arrange, fallbackRects } from "./layout.js";
       li.appendChild(pic); li.appendChild(tools); ul.appendChild(li);
     });
     var hasSample = state.photos.some(function (p) { return p.sample; });
-    $("count").textContent = n + " / " + MAX;
+    $("photoCount").textContent = n + " / " + MAX;
     $("addBtn").disabled = n >= MAX && !hasSample;
     $("save").disabled = n === 0;
     $("clearBtn").disabled = n === 0;
@@ -908,11 +908,11 @@ import { arrange, fallbackRects } from "./layout.js";
   $("arrange").addEventListener("change", function (e) {
     state.arrange = e.target.value; state.variant = 0;
     var auto = state.arrange === "auto";
-    $("count").disabled = auto;
-    if (auto) { $("count").value = "0"; state.count = 0; }
+    $("lineCount").disabled = auto;
+    if (auto) { $("lineCount").value = "0"; state.lineCount = 0; }
     render();
   });
-  $("count").addEventListener("change", function (e) { state.count = parseInt(e.target.value, 10); state.variant = 0; render(); });
+  $("lineCount").addEventListener("change", function (e) { state.lineCount = parseInt(e.target.value, 10); state.variant = 0; render(); });
   var rangeRefreshers = [];
   function bindRange(id, key, valId, fmt) {
     var el = $(id);

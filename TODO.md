@@ -33,7 +33,18 @@ label removed in 9f8a55f).
       hostname → HTTP → `caddy:80` (done for `www.gruessli.ch`, proxied CNAME to
       Cloudflare anycast IPs; app responds 200).
 
+## Bugs
+- [x] Changing one field resets other fields (*beim Ändern von Feldern werden
+      andere Felder zurückgesetzt*). Root cause: duplicate `id="count"` (photo
+      header span + rows/cols `<select>`) — `getElementById` returned the span,
+      so the rows/cols control never wired up. Renamed the span to `photoCount`
+      and the select/state to `lineCount`.
+
 ## Nice-to-have
+- [ ] Email link, or rating up/down.
+- [ ] Copy/SEO: "free online postcard creator?".
+- [ ] Caption text color and border.
+- [ ] Movable caption text field over the image, and rotatable.
 - [ ] Back up the `gruessli-data` volume (holds the postcard counter) — it is a
       named Docker volume, not Postgres, so it is outside the DB-backup flow.
 - [ ] Consider abuse protection beyond rate limiting if the counter matters
