@@ -9,7 +9,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='6.5' width='26' height='19' rx='2.5' fill='%23ffffff' stroke='%231d4f9f' stroke-width='1.6'/%3E%3Crect x='5.3' y='8.8' width='9.7' height='6.2' rx='1' fill='%235f8fd1'/%3E%3Crect x='17' y='8.8' width='9.7' height='6.2' rx='1' fill='%23e8995a'/%3E%3Crect x='5.3' y='17' width='9.7' height='6.2' rx='1' fill='%23a8c3a0'/%3E%3Crect x='17' y='17' width='9.7' height='6.2' rx='1' fill='%23e1b04a'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;500;600&family=Caveat:wght@600&family=Patrick+Hand&family=Amatic+SC:wght@700&family=Fredoka:wght@600&family=Playfair+Display:wght@600&family=Pacifico&display=swap" rel="stylesheet">
 <style>
 /* Layout: airmail-striped header, postcard preview on a desk surface (left), tool panel (right); stacks on phones. */
 :root {
@@ -127,6 +127,15 @@ input[type="color"] { -webkit-appearance: none; appearance: none; width: 30px; h
 input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; opacity: 0; }
 input[type="color"]::-webkit-color-swatch { border: none; }
 input[type="color"]::-moz-color-swatch { border: none; opacity: 0; }
+/* Caption text-colour picker shows the chosen colour, not the rainbow. */
+input[type="color"].colorval { background: none; }
+input[type="color"].colorval::-webkit-color-swatch-wrapper { opacity: 1; }
+input[type="color"].colorval::-webkit-color-swatch { border: none; border-radius: 50%; opacity: 1; }
+input[type="color"].colorval::-moz-color-swatch { border: none; opacity: 1; }
+label.check { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+label.check input { accent-color: var(--accent); }
+label.inline { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 500; }
+label.inline[hidden] { display: none; }
 .dropping .stage::after { content: var(--drop-label, "Drop photos to add them"); position: fixed; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 82%, transparent); font-family: var(--font-display); font-size: 28px; font-weight: 700; pointer-events: none; z-index: 20; }
 @media (max-width: 880px) {
   .app { grid-template-columns: minmax(0, 1fr); }
@@ -218,11 +227,19 @@ input[type="color"]::-moz-color-swatch { border: none; opacity: 0; }
       </label>
       <label class="row" for="font"><span data-i18n="captionStyle">Schriftstil</span>
         <select id="font">
-          <option value="serif" data-i18n="fontSerif">Serif kursiv</option>
-          <option value="sans" data-i18n="fontSans">Fett serifenlos</option>
-          <option value="script" data-i18n="fontScript">Handschrift</option>
+          <option value="caveat" data-i18n="fontCaveat">Handschrift</option>
+          <option value="patrick" data-i18n="fontPatrick">Handgedruckt</option>
+          <option value="amatic" data-i18n="fontAmatic">Schmal gezeichnet</option>
+          <option value="fredoka" data-i18n="fontFredoka">Rund & freundlich</option>
+          <option value="playfair" data-i18n="fontPlayfair">Elegant</option>
+          <option value="pacifico" data-i18n="fontPacifico">Pinselschrift</option>
         </select>
       </label>
+      <label class="check" for="capAuto"><input id="capAuto" type="checkbox" checked><span data-i18n="capAutoColor">Textfarbe automatisch</span></label>
+      <label class="inline" for="capColor" id="capColorRow" hidden><span data-i18n="capColorLabel">Textfarbe</span>
+        <input id="capColor" class="colorval" type="color" value="#1c2430">
+      </label>
+      <label class="check" for="capOutline"><input id="capOutline" type="checkbox"><span data-i18n="capOutline">Kontur (heller Rand)</span></label>
     </section>
 
     <section class="group">
@@ -279,9 +296,15 @@ import { arrange, fallbackRects } from "./layout.js";
       captionLabel: "Beschriftung (optional)",
       captionPh: "Grüsse vom Vierwaldstättersee",
       captionStyle: "Schriftstil",
-      fontSerif: "Serif kursiv",
-      fontSans: "Fett serifenlos",
-      fontScript: "Handschrift",
+      fontCaveat: "Handschrift",
+      fontPatrick: "Handgedruckt",
+      fontAmatic: "Schmal gezeichnet",
+      fontFredoka: "Rund & freundlich",
+      fontPlayfair: "Elegant",
+      fontPacifico: "Pinselschrift",
+      capAutoColor: "Textfarbe automatisch",
+      capColorLabel: "Textfarbe",
+      capOutline: "Kontur (heller Rand)",
       saveBtn: "Als PNG speichern",
       dropLabel: "Fotos hier ablegen zum Hinzufügen",
       notImages: "Diese Dateien sind keine Bilder.",
@@ -337,9 +360,15 @@ import { arrange, fallbackRects } from "./layout.js";
       captionLabel: "Caption (optional)",
       captionPh: "Greetings from Lake Lucerne",
       captionStyle: "Caption style",
-      fontSerif: "Serif italic",
-      fontSans: "Bold sans",
-      fontScript: "Handwriting",
+      fontCaveat: "Handwriting",
+      fontPatrick: "Hand-printed",
+      fontAmatic: "Tall hand-drawn",
+      fontFredoka: "Rounded & friendly",
+      fontPlayfair: "Elegant",
+      fontPacifico: "Brush script",
+      capAutoColor: "Automatic text colour",
+      capColorLabel: "Text colour",
+      capOutline: "Outline (light edge)",
       saveBtn: "Save as PNG",
       dropLabel: "Drop photos to add them",
       notImages: "Those files are not images.",
@@ -379,11 +408,21 @@ import { arrange, fallbackRects } from "./layout.js";
     land: { w: 1748, h: 1240 },  /* A6 landscape, 148 x 105 mm at 300 dpi */
     port: { w: 1240, h: 1748 }   /* A6 portrait, 105 x 148 mm at 300 dpi */
   };
+  // Postcard-friendly web fonts (loaded from Google Fonts); `load` forces the
+  // webfont download so the preview and the exported PNG render it, not a fallback.
   var FONTS = {
-    serif:  { css: 'italic 500 {s}px Georgia, "Times New Roman", serif' },
-    sans:   { css: '700 {s}px system-ui, -apple-system, "Segoe UI", Arial, sans-serif' },
-    script: { css: '400 {s}px "Segoe Script", "Bradley Hand", "Snell Roundhand", "Brush Script MT", cursive' }
+    caveat:   { css: '600 {s}px "Caveat", cursive',          load: '600 40px "Caveat"' },
+    patrick:  { css: '400 {s}px "Patrick Hand", cursive',    load: '400 40px "Patrick Hand"' },
+    amatic:   { css: '700 {s}px "Amatic SC", sans-serif',    load: '700 40px "Amatic SC"' },
+    fredoka:  { css: '600 {s}px "Fredoka", sans-serif',      load: '600 40px "Fredoka"' },
+    playfair: { css: '600 {s}px "Playfair Display", serif',  load: '600 40px "Playfair Display"' },
+    pacifico: { css: '400 {s}px "Pacifico", cursive',        load: '400 40px "Pacifico"' }
   };
+  function ensureFont(key) {
+    var f = FONTS[key];
+    if (!f || !f.load || !document.fonts || !document.fonts.load) return Promise.resolve();
+    return document.fonts.load(f.load).catch(function () {});
+  }
   // Ordered bright → dark.
   var SWATCHES = [
     ["#ffffff", "swWhite"], ["#f3ead8", "swSand"], ["#bcdcf2", "swLightBlue"],
@@ -394,7 +433,7 @@ import { arrange, fallbackRects } from "./layout.js";
   var state = {
     photos: [], sel: null, format: "auto", arrange: "auto", lineCount: 0, variant: 0, layoutAspects: null,
     gap: 1.2, margin: 3, radius: 0.8, bg: "#ffffff",
-    caption: "", font: "serif"
+    caption: "", font: "caveat", capAuto: true, capColor: "#1c2430", capOutline: false
   };
   var nextId = 1;
   var lastRects = [];
@@ -592,13 +631,21 @@ import { arrange, fallbackRects } from "./layout.js";
     var t = state.caption.trim();
     if (t) {
       var dark = lum(state.bg) < 0.5;
-      g.fillStyle = dark ? "#f5f5f5" : "#1c2430";
+      var textColor = state.capAuto ? (dark ? "#f5f5f5" : "#1c2430") : state.capColor;
       g.textAlign = "center"; g.textBaseline = "middle";
       var size = geo.cap * 0.56, tpl = FONTS[state.font].css;
       g.font = tpl.replace("{s}", size);
       var maxW = geo.iw * 0.96, tw = g.measureText(t).width;
       if (tw > maxW) { size = size * maxW / tw; g.font = tpl.replace("{s}", size); }
-      g.fillText(t, W / 2, geo.y0 + geo.ih + geo.cap / 2 + size * 0.04);
+      var cx = W / 2, cy = geo.y0 + geo.ih + geo.cap / 2 + size * 0.04;
+      if (state.capOutline) {
+        g.lineJoin = "round";
+        g.lineWidth = size * 0.14;
+        g.strokeStyle = lum(textColor) < 0.5 ? "#ffffff" : "#1c2430";
+        g.strokeText(t, cx, cy);
+      }
+      g.fillStyle = textColor;
+      g.fillText(t, cx, cy);
     }
 
     if (preview && state.sel != null) {
@@ -926,7 +973,14 @@ import { arrange, fallbackRects } from "./layout.js";
   bindRange("margin", "margin", "marginVal", function (v) { return v === 0 ? t("rangeNone") : v.toFixed(1); });
   bindRange("radius", "radius", "radiusVal", function (v) { return v === 0 ? t("rangeSquare") : v.toFixed(1); });
   $("caption").addEventListener("input", function (e) { state.caption = e.target.value; render(); });
-  $("font").addEventListener("change", function (e) { state.font = e.target.value; render(); });
+  $("font").addEventListener("change", function (e) { state.font = e.target.value; render(); ensureFont(state.font).then(render); });
+  $("capAuto").addEventListener("change", function (e) {
+    state.capAuto = e.target.checked;
+    $("capColorRow").hidden = e.target.checked;
+    render();
+  });
+  $("capColor").addEventListener("input", function (e) { state.capColor = e.target.value; render(); });
+  $("capOutline").addEventListener("change", function (e) { state.capOutline = e.target.checked; render(); });
 
   var swWrap = $("swatches"), colorIn = document.createElement("input");
   function setBg(hex) {
@@ -950,6 +1004,9 @@ import { arrange, fallbackRects } from "./layout.js";
 
   /* ---------- save ---------- */
   $("save").addEventListener("click", function () {
+    ensureFont(state.font).then(saveNow);
+  });
+  function saveNow() {
     var f = FORMATS[curFormat];
     var c = mkCanvas(f.w, f.h);
     draw(c.getContext("2d"), f.w, f.h, false);
@@ -962,7 +1019,7 @@ import { arrange, fallbackRects } from "./layout.js";
       $("saveInfo").textContent = t("saved", { w: f.w, h: f.h });
       bumpCount();
     }, "image/png");
-  });
+  }
 
   /* ---------- "postcards created" counter (served by server.js) ---------- */
   function showCount(n) {
@@ -1030,6 +1087,10 @@ import { arrange, fallbackRects } from "./layout.js";
   state.sel = state.photos[0].id;
   applyI18n();
   renderThumbs(); syncZoom(); fit();
+  // Pull in the caption webfonts, then redraw so the preview isn't a fallback.
+  if (document.fonts && document.fonts.load) {
+    Promise.all(Object.keys(FONTS).map(ensureFont)).then(render);
+  }
   window.addEventListener("resize", fit);
   if (window.ResizeObserver) new ResizeObserver(function () {
     var want = Math.max(240, wrap.clientWidth);
