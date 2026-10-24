@@ -42,7 +42,8 @@ label removed in 9f8a55f).
 
 ## Nice-to-have
 - [ ] Email link, or rating up/down.
-- [ ] Copy/SEO: "free online postcard creator?".
+- [x] Copy/SEO: "free online postcard creator?". Foregrounded *kostenlos* and
+      added *online* in the title and description.
 - [ ] Caption text color and border.
 - [ ] Movable caption text field over the image, and rotatable.
 - [ ] Back up the `gruessli-data` volume (holds the postcard counter) — it is a
