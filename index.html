@@ -136,6 +136,7 @@ label.check { display: flex; align-items: center; gap: 8px; font-weight: 500; }
 label.check input { accent-color: var(--accent); }
 label.inline { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 500; }
 label.inline[hidden] { display: none; }
+[hidden] { display: none !important; }
 .dropping .stage::after { content: var(--drop-label, "Drop photos to add them"); position: fixed; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 82%, transparent); font-family: var(--font-display); font-size: 28px; font-weight: 700; pointer-events: none; z-index: 20; }
 @media (max-width: 880px) {
   .app { grid-template-columns: minmax(0, 1fr); }
@@ -235,6 +236,17 @@ label.inline[hidden] { display: none; }
           <option value="pacifico" data-i18n="fontPacifico">Pinselschrift</option>
         </select>
       </label>
+      <label class="row" for="capMode"><span data-i18n="capPlace">Platzierung</span>
+        <select id="capMode">
+          <option value="top" data-i18n="capTop">Oben (automatisch)</option>
+          <option value="bottom" data-i18n="capBottom" selected>Unten (automatisch)</option>
+          <option value="float" data-i18n="capFloat">Frei über dem Bild</option>
+        </select>
+      </label>
+      <label class="row" for="capRot" id="capRotRow" hidden><span class="line"><span data-i18n="capRotate">Drehung</span><span class="val" id="capRotVal"></span></span>
+        <input id="capRot" type="range" min="-45" max="45" step="1" value="0">
+      </label>
+      <p class="hint" id="capDragRow" style="text-align:left;margin:2px 0 0" data-i18n="capDragHint" hidden>Tipp: Ziehe die Beschriftung direkt auf dem Bild an die gewünschte Stelle.</p>
       <label class="check" for="capAuto"><input id="capAuto" type="checkbox" checked><span data-i18n="capAutoColor">Textfarbe automatisch</span></label>
       <label class="inline" for="capColor" id="capColorRow" hidden><span data-i18n="capColorLabel">Textfarbe</span>
         <input id="capColor" class="colorval" type="color" value="#1c2430">
@@ -317,6 +329,12 @@ import { arrange, fallbackRects } from "./layout.js";
       capBoxColorLabel: "Rahmenfarbe",
       capFill: "Rahmen füllen",
       capFillColorLabel: "Füllfarbe",
+      capPlace: "Platzierung",
+      capTop: "Oben (automatisch)",
+      capBottom: "Unten (automatisch)",
+      capFloat: "Frei über dem Bild",
+      capRotate: "Drehung",
+      capDragHint: "Tipp: Ziehe die Beschriftung direkt auf dem Bild an die gewünschte Stelle.",
       saveBtn: "Als PNG speichern",
       dropLabel: "Fotos hier ablegen zum Hinzufügen",
       notImages: "Diese Dateien sind keine Bilder.",
@@ -385,6 +403,12 @@ import { arrange, fallbackRects } from "./layout.js";
       capBoxColorLabel: "Frame colour",
       capFill: "Fill the frame",
       capFillColorLabel: "Fill colour",
+      capPlace: "Placement",
+      capTop: "Top (automatic)",
+      capBottom: "Bottom (automatic)",
+      capFloat: "Free over the image",
+      capRotate: "Rotation",
+      capDragHint: "Tip: drag the caption on the image to place it where you like.",
       saveBtn: "Save as PNG",
       dropLabel: "Drop photos to add them",
       notImages: "Those files are not images.",
@@ -450,10 +474,12 @@ import { arrange, fallbackRects } from "./layout.js";
     photos: [], sel: null, format: "auto", arrange: "auto", lineCount: 0, variant: 0, layoutAspects: null,
     gap: 1.2, margin: 3, radius: 0.8, bg: "#ffffff",
     caption: "", font: "caveat", capAuto: true, capColor: "#1c2430", capOutline: false,
-    capBox: false, capBoxColor: "#1c2430", capFill: false, capFillColor: "#ffffff"
+    capBox: false, capBoxColor: "#1c2430", capFill: false, capFillColor: "#ffffff",
+    capMode: "bottom", capX: 0.5, capY: 0.85, capRot: 0
   };
   var nextId = 1;
   var lastRects = [];
+  var lastCap = null;
   var curFormat = "land";
   var pk = 1;            /* canvas pixels per CSS pixel in the preview */
   var swapDrag = null;   /* active drag of a photo handle: { from, over, px, py } */
@@ -524,8 +550,12 @@ import { arrange, fallbackRects } from "./layout.js";
     var s = Math.min(W, H);
     var m = state.margin / 100 * s;
     var g = state.gap / 100 * s;
-    var cap = state.caption.trim() ? Math.round(H * 0.11) : 0;
-    return { s: s, m: m, g: g, cap: cap, x0: m, y0: m, iw: W - 2 * m, ih: H - 2 * m - cap };
+    // "top"/"bottom" modes reserve an auto-caption band and shrink the grid;
+    // "float" mode lets the caption sit over the photos, so the grid fills the card.
+    var auto = state.caption.trim() && (state.capMode === "top" || state.capMode === "bottom");
+    var cap = auto ? Math.round(H * 0.11) : 0;
+    var y0 = m + (state.capMode === "top" ? cap : 0);
+    return { s: s, m: m, g: g, cap: cap, x0: m, y0: y0, iw: W - 2 * m, ih: H - 2 * m - cap };
   }
   var planCache = {}, planCount = 0;
   function plan(W, H) {
@@ -537,7 +567,7 @@ import { arrange, fallbackRects } from "./layout.js";
       state.layoutAspects = state.photos.map(function (p) { return p.iw / p.ih; });
     }
     var a = state.layoutAspects;
-    var key = [W, H, state.margin, state.gap, geo.cap, state.arrange, state.lineCount,
+    var key = [W, H, state.margin, state.gap, geo.cap, geo.y0, state.arrange, state.lineCount,
       a.map(function (v) { return v.toFixed(4); }).join(",")].join("|");
     if (planCache[key]) return planCache[key];
     var best = arrange(a, geo, state.arrange, state.lineCount) ||
@@ -574,6 +604,52 @@ import { arrange, fallbackRects } from "./layout.js";
     g.beginPath();
     if (rad > 0 && g.roundRect) g.roundRect(r.x, r.y, r.w, r.h, rad);
     else g.rect(r.x, r.y, r.w, r.h);
+  }
+
+  /* The caption floats over the photos at state.capX/capY (0..1 of the card),
+     rotated by state.capRot. Returns its hit box so the pointer code can drag it. */
+  function drawCaption(g, W, H, geo) {
+    var t = state.caption.trim();
+    if (!t) return null;
+    var auto = state.capMode !== "float";
+    var size = (auto ? geo.cap * 0.56 : geo.s * 0.07), tpl = FONTS[state.font].css;
+    g.save();
+    g.font = tpl.replace("{s}", size);
+    var maxW = geo.iw * 0.96, tw = g.measureText(t).width;
+    if (tw > maxW) { size = size * maxW / tw; g.font = tpl.replace("{s}", size); tw = g.measureText(t).width; }
+    var cx, cy, rot;
+    if (auto) {
+      cx = W / 2;
+      cy = (state.capMode === "top" ? geo.m + geo.cap / 2 : geo.y0 + geo.ih + geo.cap / 2) + size * 0.04;
+      rot = 0;
+    } else { cx = state.capX * W; cy = state.capY * H; rot = state.capRot * Math.PI / 180; }
+    var bw = tw + size * 0.9, bh = size * 1.55;
+    var dark = lum(state.bg) < 0.5;
+    var textColor = state.capAuto ? (dark ? "#f5f5f5" : "#1c2430") : state.capColor;
+    g.translate(cx, cy); g.rotate(rot);
+    g.textAlign = "center"; g.textBaseline = "middle";
+    if (state.capBox) {
+      var box = { x: -bw / 2, y: -bh / 2, w: bw, h: bh };
+      if (state.capFill) { g.fillStyle = state.capFillColor; pathRect(g, box, bh * 0.22); g.fill(); }
+      g.lineJoin = "round"; g.lineWidth = size * 0.07; g.strokeStyle = state.capBoxColor;
+      pathRect(g, { x: box.x + g.lineWidth / 2, y: box.y + g.lineWidth / 2, w: box.w - g.lineWidth, h: box.h - g.lineWidth }, bh * 0.22);
+      g.stroke();
+    }
+    if (state.capOutline) {
+      g.lineJoin = "round"; g.lineWidth = size * 0.14;
+      g.strokeStyle = lum(textColor) < 0.5 ? "#ffffff" : "#1c2430";
+      g.strokeText(t, 0, 0);
+    }
+    g.fillStyle = textColor; g.fillText(t, 0, 0);
+    g.restore();
+    // Only the free-floating caption is draggable; the top/bottom band is auto-placed.
+    return auto ? null : { cx: cx, cy: cy, w: bw, h: bh, rot: rot };
+  }
+  function capHitTest(x, y) {
+    var c = lastCap; if (!c) return false;
+    var dx = x - c.cx, dy = y - c.cy, cs = Math.cos(c.rot), sn = Math.sin(c.rot);
+    var rx = dx * cs + dy * sn, ry = -dx * sn + dy * cs;
+    return Math.abs(rx) <= c.w / 2 && Math.abs(ry) <= c.h / 2;
   }
 
   /* ---------- drawing (same code for preview and export) ---------- */
@@ -645,35 +721,8 @@ import { arrange, fallbackRects } from "./layout.js";
       g.restore();
     });
 
-    var t = state.caption.trim();
-    if (t) {
-      var dark = lum(state.bg) < 0.5;
-      var textColor = state.capAuto ? (dark ? "#f5f5f5" : "#1c2430") : state.capColor;
-      g.textAlign = "center"; g.textBaseline = "middle";
-      var size = geo.cap * 0.56, tpl = FONTS[state.font].css;
-      g.font = tpl.replace("{s}", size);
-      var maxW = geo.iw * 0.96, tw = g.measureText(t).width;
-      if (tw > maxW) { size = size * maxW / tw; g.font = tpl.replace("{s}", size); }
-      var cx = W / 2, cy = geo.y0 + geo.ih + geo.cap / 2 + size * 0.04;
-      if (state.capBox) {
-        var bw = g.measureText(t).width + size * 0.9, bh = size * 1.55;
-        var box = { x: cx - bw / 2, y: cy - bh / 2, w: bw, h: bh };
-        if (state.capFill) { g.fillStyle = state.capFillColor; pathRect(g, box, bh * 0.22); g.fill(); }
-        g.lineJoin = "round";
-        g.lineWidth = size * 0.07;
-        g.strokeStyle = state.capBoxColor;
-        pathRect(g, { x: box.x + g.lineWidth / 2, y: box.y + g.lineWidth / 2, w: box.w - g.lineWidth, h: box.h - g.lineWidth }, bh * 0.22);
-        g.stroke();
-      }
-      if (state.capOutline) {
-        g.lineJoin = "round";
-        g.lineWidth = size * 0.14;
-        g.strokeStyle = lum(textColor) < 0.5 ? "#ffffff" : "#1c2430";
-        g.strokeText(t, cx, cy);
-      }
-      g.fillStyle = textColor;
-      g.fillText(t, cx, cy);
-    }
+    var capHB = drawCaption(g, W, H, geo);
+    if (preview) lastCap = capHB;
 
     if (preview && state.sel != null) {
       var si = state.photos.findIndex(function (p) { return p.id === state.sel; });
@@ -901,9 +950,15 @@ import { arrange, fallbackRects } from "./layout.js";
     return -1;
   }
   function hit(e) { var q = pos(e); return hitAt(q.x, q.y); }
-  var drag = null;
+  var drag = null, capDrag = null;
   cv.addEventListener("pointerdown", function (e) {
-    var q = pos(e), i = hitAt(q.x, q.y); if (i < 0) return;
+    var q = pos(e);
+    if (state.caption.trim() && capHitTest(q.x, q.y)) {
+      cv.setPointerCapture(e.pointerId); cv.classList.add("grabbing");
+      capDrag = { x: e.clientX, y: e.clientY, cx: state.capX, cy: state.capY };
+      return;
+    }
+    var i = hitAt(q.x, q.y); if (i < 0) return;
     var p = state.photos[i];
     if (p.id !== state.sel) { state.sel = p.id; renderThumbs(); syncZoom(); }
     cv.setPointerCapture(e.pointerId); cv.classList.add("grabbing");
@@ -912,6 +967,12 @@ import { arrange, fallbackRects } from "./layout.js";
     render();
   });
   cv.addEventListener("pointermove", function (e) {
+    if (capDrag) {
+      var k = cv.width / cv.getBoundingClientRect().width;
+      state.capX = clamp(capDrag.cx + (e.clientX - capDrag.x) * k / cv.width, 0, 1);
+      state.capY = clamp(capDrag.cy + (e.clientY - capDrag.y) * k / cv.height, 0, 1);
+      render(); return;
+    }
     if (swapDrag) {
       var q = pos(e);
       swapDrag.px = q.x; swapDrag.py = q.y; swapDrag.over = hitAt(q.x, q.y);
@@ -919,6 +980,7 @@ import { arrange, fallbackRects } from "./layout.js";
     }
     if (!drag) {
       var q2 = pos(e), hi = hitAt(q2.x, q2.y);
+      if (state.caption.trim() && capHitTest(q2.x, q2.y)) { cv.style.cursor = "move"; return; }
       cv.style.cursor = hi >= 0 && inHandle(lastRects[hi], q2) ? "move" : "";
       return;
     }
@@ -930,6 +992,7 @@ import { arrange, fallbackRects } from "./layout.js";
     render();
   });
   function endDrag(e) {
+    if (capDrag) { capDrag = null; cv.classList.remove("grabbing"); return; }
     if (swapDrag) {
       var s = swapDrag;
       swapDrag = null;
@@ -999,6 +1062,14 @@ import { arrange, fallbackRects } from "./layout.js";
   bindRange("gap", "gap", "gapVal", function (v) { return v === 0 ? t("rangeNone") : v.toFixed(1); });
   bindRange("margin", "margin", "marginVal", function (v) { return v === 0 ? t("rangeNone") : v.toFixed(1); });
   bindRange("radius", "radius", "radiusVal", function (v) { return v === 0 ? t("rangeSquare") : v.toFixed(1); });
+  bindRange("capRot", "capRot", "capRotVal", function (v) { return v === 0 ? "0°" : v + "°"; });
+  $("capMode").addEventListener("change", function (e) {
+    state.capMode = e.target.value;
+    var float = e.target.value === "float";
+    $("capRotRow").hidden = !float;
+    $("capDragRow").hidden = !float;
+    render();
+  });
   $("caption").addEventListener("input", function (e) { state.caption = e.target.value; render(); });
   $("font").addEventListener("change", function (e) { state.font = e.target.value; render(); ensureFont(state.font).then(render); });
   $("capAuto").addEventListener("change", function (e) {

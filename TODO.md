@@ -49,7 +49,12 @@ label removed in 9f8a55f).
       strokes a contrasting edge around the caption glyphs; and a "Rahmen"
       box/frame around the caption with its own frame colour and an optional
       fill colour.
-- [ ] Movable caption text field over the image, and rotatable.
+- [x] Movable caption text field over the image, and rotatable. A "Platzierung"
+      selector offers three modes: "Oben (automatisch)" and "Unten (automatisch)"
+      (default) auto-center the caption in a band above/below the grid, and "Frei
+      über dem Bild" floats it over the photos (drag anywhere, rotate with a
+      −45°..45° slider). Default background transparent; box/fill gives an
+      opaque backing.
 - [ ] Back up the `gruessli-data` volume (holds the postcard counter) — it is a
       named Docker volume, not Postgres, so it is outside the DB-backup flow.
 - [ ] Consider abuse protection beyond rate limiting if the counter matters
