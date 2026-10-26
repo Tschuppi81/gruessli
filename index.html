@@ -142,10 +142,14 @@ label.inline[hidden] { display: none; }
 @media (max-width: 880px) {
   .app { grid-template-columns: minmax(0, 1fr); }
 }
-/* Desktop (two-column): pin the postcard in view so it stays put while the
-   taller control panel scrolls past it. The stage itself never scrolls. */
+/* Desktop (two-column): the header + postcard share the left column, so pinning
+   that whole column keeps the title/description and the postcard in view while
+   the taller control panel scrolls past them. The stripe pins just above it. */
 @media (min-width: 881px) {
-  .stage { position: sticky; top: 16px; }
+  .stripe { position: sticky; top: 0; z-index: 6; }
+  .stage-col { position: sticky; top: 9px; align-self: start; }
+  /* Balance the panel: same top gap below the stripe as the 32px at the bottom. */
+  .panel { margin-top: 32px; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .btn { transition: background-color .15s, border-color .15s; }
@@ -154,22 +158,24 @@ label.inline[hidden] { display: none; }
 </head>
 <body>
 <div class="stripe" aria-hidden="true"></div>
-<header class="top">
-  <div class="langsw" id="langsw" role="group" aria-label="Sprache / Language">
-    <button type="button" data-lang="de" aria-pressed="true">DE</button>
-    <button type="button" data-lang="en" aria-pressed="false">EN</button>
-  </div>
-  <h1>Grüessli</h1>
-  <p data-i18n="subtitle">Kreiere eine Postkarte und sende ein Grüessli aus den Ferien oder eifach um eine Freude zu machen!</p>
-  <p class="made" id="madeCount" hidden><strong id="madeNum">0</strong> <span data-i18n="madeLabel">Postkarten erstellt</span></p>
-</header>
 
 <main class="app">
-  <section class="stage" aria-label="Postkarten-Vorschau" data-i18n-aria="postcardPreview">
-    <div class="card-wrap" id="cardWrap"><canvas id="cv" aria-label="Postkarten-Vorschau" data-i18n-aria="postcardPreview"></canvas></div>
-    <p class="hint" data-i18n="hint">Hochformat-Fotos erhalten hohe Zellen, Querformat-Fotos breite. Ziehe ein Foto, um es in seiner Zelle zu verschieben, und scrolle darüber zum Zoomen. Um zwei Fotos zu tauschen, ziehe den gepunkteten Griff in der Ecke eines Fotos auf ein anderes. Lege Bilddateien irgendwo auf der Seite ab, um sie hinzuzufügen.</p>
-    <footer class="foot">Grüessli · v<span id="appVersion">__APP_VERSION__</span></footer>
-  </section>
+  <div class="stage-col">
+    <header class="top">
+      <div class="langsw" id="langsw" role="group" aria-label="Sprache / Language">
+        <button type="button" data-lang="de" aria-pressed="true">DE</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <h1>Grüessli</h1>
+      <p data-i18n="subtitle">Kreiere eine Postkarte und sende ein Grüessli aus den Ferien oder eifach um eine Freude zu machen!</p>
+      <p class="made" id="madeCount" hidden><strong id="madeNum">0</strong> <span data-i18n="madeLabel">Postkarten erstellt</span></p>
+    </header>
+    <section class="stage" aria-label="Postkarten-Vorschau" data-i18n-aria="postcardPreview">
+      <div class="card-wrap" id="cardWrap"><canvas id="cv" aria-label="Postkarten-Vorschau" data-i18n-aria="postcardPreview"></canvas></div>
+      <p class="hint" data-i18n="hint">Hochformat-Fotos erhalten hohe Zellen, Querformat-Fotos breite. Ziehe ein Foto, um es in seiner Zelle zu verschieben, und scrolle darüber zum Zoomen. Um zwei Fotos zu tauschen, ziehe den gepunkteten Griff in der Ecke eines Fotos auf ein anderes. Lege Bilddateien irgendwo auf der Seite ab, um sie hinzuzufügen.</p>
+      <footer class="foot">Grüessli · v<span id="appVersion">__APP_VERSION__</span></footer>
+    </section>
+  </div>
 
   <aside class="panel">
     <section class="group" aria-labelledby="hPhotos">
