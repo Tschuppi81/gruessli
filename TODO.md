@@ -41,6 +41,8 @@ label removed in 9f8a55f).
       and the select/state to `lineCount`.
 
 ## Nice-to-have
+- [ ] Idea: Menu layout on small screens: make the desktop controls menu scrollable
+      while the postcard stays visible, and move the mobile menu into an overlay.
 - [ ] Email link, or rating up/down.
 - [x] Copy/SEO: "free online postcard creator?". Foregrounded *kostenlos* and
       added *online* in the title and description.
