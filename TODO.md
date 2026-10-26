@@ -41,8 +41,13 @@ label removed in 9f8a55f).
       and the select/state to `lineCount`.
 
 ## Nice-to-have
-- [ ] Idea: Menu layout on small screens: make the desktop controls menu scrollable
-      while the postcard stays visible, and move the mobile menu into an overlay.
+- [x] Desktop: keep the postcard visible while the controls menu scrolls. The
+      header + postcard now share a sticky left column (pinned below the airmail
+      stripe), so the title/preview stay in view while the control panel scrolls
+      past them. Replaced an earlier JS header-measuring approach with a single
+      sticky `.stage-col`.
+- [ ] Mobile: move the controls menu into an overlay (e.g. a partial bottom
+      sheet that leaves the postcard visible above it).
 - [ ] Email link, or rating up/down.
 - [x] Copy/SEO: "free online postcard creator?". Foregrounded *kostenlos* and
       added *online* in the title and description.
