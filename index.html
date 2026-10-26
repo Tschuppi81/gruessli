@@ -108,6 +108,7 @@ button { font: inherit; cursor: pointer; }
 .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
 .btnrow .btn { flex: 1 1 auto; }
 .notice { min-height: 1.3em; margin: 0; font-size: 13px; color: var(--muted); }
+#saveInfo:empty { display: none; }
 .thumbs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
 .thumb { display: grid; gap: 4px; }
 .thumb .pic { position: relative; padding: 0; border: 2px solid transparent; border-radius: 6px; background: var(--field); overflow: hidden; aspect-ratio: 1; }
@@ -141,6 +142,11 @@ label.inline[hidden] { display: none; }
 @media (max-width: 880px) {
   .app { grid-template-columns: minmax(0, 1fr); }
 }
+/* Desktop (two-column): pin the postcard in view so it stays put while the
+   taller control panel scrolls past it. The stage itself never scrolls. */
+@media (min-width: 881px) {
+  .stage { position: sticky; top: 16px; }
+}
 @media (prefers-reduced-motion: no-preference) {
   .btn { transition: background-color .15s, border-color .15s; }
 }
@@ -162,6 +168,7 @@ label.inline[hidden] { display: none; }
   <section class="stage" aria-label="Postkarten-Vorschau" data-i18n-aria="postcardPreview">
     <div class="card-wrap" id="cardWrap"><canvas id="cv" aria-label="Postkarten-Vorschau" data-i18n-aria="postcardPreview"></canvas></div>
     <p class="hint" data-i18n="hint">Hochformat-Fotos erhalten hohe Zellen, Querformat-Fotos breite. Ziehe ein Foto, um es in seiner Zelle zu verschieben, und scrolle darüber zum Zoomen. Um zwei Fotos zu tauschen, ziehe den gepunkteten Griff in der Ecke eines Fotos auf ein anderes. Lege Bilddateien irgendwo auf der Seite ab, um sie hinzuzufügen.</p>
+    <footer class="foot">Grüessli · v<span id="appVersion">__APP_VERSION__</span></footer>
   </section>
 
   <aside class="panel">
@@ -269,7 +276,6 @@ label.inline[hidden] { display: none; }
   </aside>
 </main>
 
-<footer class="foot">Grüessli · v<span id="appVersion">__APP_VERSION__</span></footer>
 <script>
   // Server fills __APP_VERSION__ from package.json; hide the version if the
   // page is viewed straight from disk (placeholder left unsubstituted).
