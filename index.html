@@ -28,6 +28,7 @@
   --shadow: 0 1px 2px rgba(20, 30, 50, .14), 0 14px 34px rgba(20, 30, 50, .18);
   --font-display: "Bricolage Grotesque", system-ui, sans-serif;
   --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --stripe-h: 9px;   /* airmail stripe height; the sticky left column pins below it */
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -60,7 +61,7 @@ body {
   padding-block: 0 32px;
 }
 .stripe {
-  height: 9px;
+  height: var(--stripe-h);
   margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))) calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
   background: repeating-linear-gradient(135deg, var(--red) 0 14px, var(--stripe-gap) 14px 24px, var(--blue) 24px 38px, var(--stripe-gap) 38px 48px);
 }
@@ -147,7 +148,7 @@ label.inline[hidden] { display: none; }
    the taller control panel scrolls past them. The stripe pins just above it. */
 @media (min-width: 881px) {
   .stripe { position: sticky; top: 0; z-index: 6; }
-  .stage-col { position: sticky; top: 9px; align-self: start; }
+  .stage-col { position: sticky; top: var(--stripe-h); }
   /* Balance the panel: same top gap below the stripe as the 32px at the bottom. */
   .panel { margin-top: 32px; }
 }
