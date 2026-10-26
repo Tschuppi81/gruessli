@@ -44,14 +44,24 @@ label removed in 9f8a55f).
 - [ ] Email link, or rating up/down.
 - [x] Copy/SEO: "free online postcard creator?". Foregrounded *kostenlos* and
       added *online* in the title and description.
-- [ ] Caption text color and border.
-- [ ] Movable caption text field over the image, and rotatable.
+- [x] Caption text color and border. Added an "automatic colour" toggle that,
+      when off, reveals a text-colour picker; a "Kontur" outline checkbox that
+      strokes a contrasting edge around the caption glyphs; and a "Rahmen"
+      box/frame around the caption with its own frame colour and an optional
+      fill colour.
+- [x] Movable caption text field over the image, and rotatable. A "Platzierung"
+      selector offers three modes: "Oben (automatisch)" and "Unten (automatisch)"
+      (default) auto-center the caption in a band above/below the grid, and "Frei
+      über dem Bild" floats it over the photos (drag anywhere, rotate with a
+      −45°..45° slider). Default background transparent; box/fill gives an
+      opaque backing.
 - [ ] Back up the `gruessli-data` volume (holds the postcard counter) — it is a
       named Docker volume, not Postgres, so it is outside the DB-backup flow.
 - [ ] Consider abuse protection beyond rate limiting if the counter matters
       (the increment endpoint is intentionally public).
-- [ ] More postcard caption fonts — currently just three (serif italic, bold
-      sans, handwriting); offer a wider selection in the caption font picker.
+- [x] More postcard caption fonts — replaced the three system styles with six
+      postcard-friendly Google Fonts (Caveat, Patrick Hand, Amatic SC, Fredoka,
+      Playfair Display, Pacifico), force-loaded before preview/export draw.
 
 ## Done
 - [x] Favicon — inline SVG postcard-with-photo-grid icon in `index.html`
