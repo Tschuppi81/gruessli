@@ -32,6 +32,7 @@ label removed in 9f8a55f).
 - [x] In Cloudflare **Zero Trust → Tunnels → Public Hostnames**, add a public
       hostname → HTTP → `caddy:80` (done for `www.gruessli.ch`, proxied CNAME to
       Cloudflare anycast IPs; app responds 200).
+  =>  This should all be done as it is online.., claude to check 
 
 ## Bugs
 - [x] Changing one field resets other fields (*beim Ändern von Feldern werden
@@ -47,7 +48,7 @@ label removed in 9f8a55f).
       past them. Replaced an earlier JS header-measuring approach with a single
       sticky `.stage-col`.
 - [ ] Mobile: move the controls menu into an overlay (e.g. a partial bottom
-      sheet that leaves the postcard visible above it).
+      sheet that leaves the postcard visible above it). Is this an improvement?
 - [ ] Email link, or rating up/down.
 - [x] Copy/SEO: "free online postcard creator?". Foregrounded *kostenlos* and
       added *online* in the title and description.
